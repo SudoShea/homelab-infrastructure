@@ -2,6 +2,13 @@
 
 All notable changes to the `homelab-infrastructure` project will be documented in this file.
 
+## [1.2.0] - 2026-07-24
+### Added
+- Created `scripts/backup.sh` to generate client-side AES-256 encrypted snapshots using `podman unshare`.
+- Created `scripts/test-restore.sh` to perform SHA-256 verification and isolated dry-run extractions into `/tmp/restore_test`.
+- Authored `docs/encrypted-backup-and-retention.md` runbook defining 3-2-1 backup architecture, RPO/RTO metrics, and verification standards.
+- Configured automated host security updates via `unattended-upgrades` on Pi host.
+
 ## [1.1.0] - 2026-07-24
 ### Added
 - Created `docs/topology-and-disaster-recovery.md` covering edge-to-core network topology, Podman container isolation boundaries, cold-boot restore steps, and RTO/RPO objectives.

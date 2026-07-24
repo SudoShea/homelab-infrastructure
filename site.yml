@@ -1,13 +1,32 @@
 # ==============================================================================
 # Playbook    : site.yml
-# Description : Rootless Podman Homelab Stack Deployment Playbook
+# Description : Rootless Podman Homelab Stack, Backup Automation, & Offsite Sync
 # Author      : SudoShea
-# Version     : 1.0.0
+# Version     : 1.2.0
 # License     : MIT
 # ==============================================================================
 ---
-- name: Deploy Rootless Podman Homelab Stack
+- name: Deploy Rootless Podman Homelab Stack & Local Backup Automation
   hosts: homelab
   gather_facts: true
   roles:
     - podman_stack
+
+- name: Configure Secondary Server Offsite Sync & Storage Pipeline
+  hosts: home_server
+  gather_facts: true
+  tasks:
+    - name: Ensure server backup destination directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts['user_dir'] }}/backups/pihole"
+        state: directory
+        mode: '0755'
+
+    - name: Schedule nightly offsite sync to Google Drive (03:00 AM)
+      ansible.builtin.cron:
+        name: "Pull Pi-hole backup and sync offsite to Google Drive"
+        minute: "0"
+        hour: "3"
+        job: >-
+          rsync -az sclark@pihole:~/backups/ {{ ansible_facts['user_dir'] }}/backups/pihole/ &&
+          rclone sync {{ ansible_facts['user_dir'] }}/backups/pihole/ gdrive:HomelabBackups/

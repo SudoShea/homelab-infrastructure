@@ -1,8 +1,9 @@
 # ==============================================================================
 # Role Task   : roles/podman_stack/tasks/main.yml
-# Description : Provisions rootless container volumes, configs, and Podman containers
+# Description : Provisions rootless container volumes, configs, Podman containers,
+#               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.0.1
+# Version     : 1.2.0
 # License     : MIT
 # ==============================================================================
 ---
@@ -22,6 +23,7 @@
     - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config"
     - "{{ ansible_facts['user_dir'] }}/homelab/caddy/config"
     - "{{ ansible_facts['user_dir'] }}/homelab/caddy/data"
+    - "{{ ansible_facts['user_dir'] }}/scripts"
 
 - name: Deploy Unbound configuration template
   ansible.builtin.template:
@@ -70,3 +72,64 @@
     volumes:
       - "{{ ansible_facts['user_dir'] }}/homelab/caddy/config:/etc/caddy"
       - "{{ ansible_facts['user_dir'] }}/homelab/caddy/data:/data"
+
+# ==============================================================================
+# Backup & Restore Automation Tasks
+# ==============================================================================
+
+- name: Deploy automated backup script
+  ansible.builtin.copy:
+    src: scripts/backup.sh
+    dest: "{{ ansible_facts['user_dir'] }}/scripts/backup.sh"
+    mode: '0755'
+
+- name: Deploy restore verification test script
+  ansible.builtin.copy:
+    src: scripts/test-restore.sh
+    dest: "{{ ansible_facts['user_dir'] }}/scripts/test-restore.sh"
+    mode: '0755'
+
+- name: Schedule daily AES-256 encrypted backup cron job (02:00 AM)
+  ansible.builtin.cron:
+    name: "Nightly homelab stack backup"
+    minute: "0"
+    hour: "2"
+    job: "{{ ansible_facts['user_dir'] }}/scripts/backup.sh > /dev/null 2>&1"
+
+- name: Schedule weekly restore verification test cron job (Sunday 02:30 AM)
+  ansible.builtin.cron:
+    name: "Weekly backup restore verification test"
+    minute: "30"
+    hour: "2"
+    weekday: "0"
+    job: "{{ ansible_facts['user_dir'] }}/scripts/test-restore.sh > /dev/null 2>&1"
+
+# ==============================================================================
+# Host Security & Automated Maintenance Tasks
+# ==============================================================================
+
+- name: Install unattended-upgrades package
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  become: true
+
+- name: Configure automatic security upgrades
+  ansible.builtin.copy:
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: '0644'
+  become: true
+
+- name: Schedule weekly apt cleanup cron job (Sunday 04:00 AM)
+  ansible.builtin.cron:
+    name: "Weekly system upgrade and package cleanup"
+    minute: "0"
+    hour: "4"
+    weekday: "0"
+    job: "apt update && apt upgrade -y && apt autoremove -y && apt clean"
+  become: true
