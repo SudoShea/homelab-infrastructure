@@ -19,7 +19,7 @@ An Ansible-driven Infrastructure-as-Code repository for provisioning a rootless 
 
 ### 1. Clone repository
 ```bash
-git clone [https://github.com/SudoShea/homelab-infrastructure.git](https://github.com/SudoShea/homelab-infrastructure.git)
+git clone https://github.com/SudoShea/homelab-infrastructure.git
 cd homelab-infrastructure
 ```
 ### 2. Run Playbook
