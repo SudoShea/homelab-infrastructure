@@ -2,7 +2,7 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.2.0
+* **Version:** 1.3.0
 * **Last Updated:** 2026-07-24
 
 ---
@@ -15,7 +15,6 @@ This runbook defines the automated 3-2-1 backup pipeline, client-side encryption
 * **Path:** `~/docker/pihole/`
   * `etc-pihole/` & `etc-dnsmasq.d/` (Pi-hole)
   * `unbound/` (Unbound configuration)
-  * `caddy_config/`, `caddy_data/`, `Caddyfile` (Caddy reverse proxy)
 
 ---
 
@@ -92,7 +91,7 @@ Executes automatically every Sunday at 02:30 AM via `cron`:
 
 1. Verifies the latest `.sha256` checksum against the `.gpg` archive
 2. Decrypts and performs a dry-run extraction into an isolated temporary directory (`/tmp/restore_test`).
-3. Confirms database and configuration file readability (`pihole-FTL.db`, `Caddyfile`, `unbound.conf`).
+3. Confirms database and configuration file readability (`pihole-FTL.db`, `unbound.conf`).
 4. Cleans up temporary artifacts cleanly without touching live volumes.
 
 ---
@@ -106,4 +105,5 @@ To ensure the primary host remains secure without risking container downtime:
 ---
 
 ## 📄 License
+
 Distributed under the MIT License. See `LICENSE` for details.

@@ -2,6 +2,18 @@
 
 All notable changes to the `homelab-infrastructure` project will be documented in this file.
 
+## [1.3.0] - 2026-07-24
+
+### Removed
+* **Caddy Reverse Proxy:** Completely removed the Caddy container, associated data directories, and legacy proxy routing roles/templates in favor of native service architecture.
+
+### Added
+* **Native Pi-hole v6 HTTPS:** Configured Pi-hole's built-in Civetweb webserver to natively serve HTTPS traffic on port 443 using custom local CA-signed `tls.pem` certificates.
+* **Automated Certificate Deployment:** Documented local root CA workflows and automated renewal scripts for updating Pi-hole TLS certificates.
+
+### Changed
+* **Network Topology & Documentation:** Updated `docs/topology-and-disaster-recovery.md` and `README.md` to remove Caddy from the architecture and reflect native Pi-hole v6 TLS container port bindings (`443/tcp`).
+
 ## [1.2.0] - 2026-07-24
 ### Added
 - Created `scripts/backup.sh` to generate client-side AES-256 encrypted snapshots using `podman unshare`.

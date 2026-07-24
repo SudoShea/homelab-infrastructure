@@ -2,7 +2,7 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.2.0
+* **Version:** 1.3.0
 * **Last Updated:** 2026-07-24
 
 ---
@@ -14,20 +14,18 @@ The homelab environment operates on a segmented local network. External web traf
 
 ```text
 [ Local Clients ]
-       │
-       ├─── HTTP/HTTPS Requests (Port 80/443) ───► [ Caddy Reverse Proxy ]
-       │                                                    │
-       │                                                    ├──► Pi-hole Web (127.0.0.1:80)
-       │                                                    └──► Other Internal Services
-       │
-       └─── DNS Queries (Port 53) ───────────────► [ Pi-hole DNS Filter ]
-                                                            │
-                                                            │ (Internal Forward: 127.0.0.1#5335)
-                                                            ▼
-                                                   [ Unbound Recursive DNS ]
-                                                            │
-                                                            │ (Direct Root Server Queries)
-
+        │
+        ├─── HTTPS / HTTP Requests (Port 443 / 80) ────► [ Pi-hole Native Web & TLS (v6) ]
+        │                                                        │
+        │                                                        │ (Internal Forward: 127.0.0.1#5335)
+        │                                                        ▼
+        └─── DNS Queries (Port 53) ──────────────────────► [ Pi-hole DNS Filter ]
+                                                                 │
+                                                                 ▼
+                                                        [ Unbound Recursive DNS ]
+                                                                 │
+                                                                 ▼
+                                                        (Direct Root Server Queries)
 ```
 ---
 
@@ -38,7 +36,6 @@ All service containers run rootless under Podman, managed by the non-privileged 
 | :--- | :--- | :--- | :--- | :--- |
 | **Pi-hole** | `pihole` | `53/udp`, `53/tcp`, `80/tcp` | DNS Filtering & Ad-blocking | `~/homelab/pihole/etc-pihole`<br>`~/homelab/pihole/etc-dnsmasq.d` |
 | **Unbound** | `unbound` | `5335/udp` (Loopback) | Recursive Root DNS Resolver | `~/homelab/unbound/config` |
-| **Caddy** | `caddy` | `80/tcp`, `443/tcp` | Internal TLS & Proxy Routing | `~/homelab/caddy/config`<br>`~/homelab/caddy/data` |
 
 ---
 
