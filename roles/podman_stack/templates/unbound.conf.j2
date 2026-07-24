@@ -1,0 +1,30 @@
+# ==============================================================================
+# Template    : roles/podman_stack/templates/unbound.conf.j2
+# Description : Unbound recursive DNS server configuration
+# Author      : SudoShea
+# Version     : 1.0.0
+# License     : MIT
+# ==============================================================================
+server:
+    verbosity: 1
+    interface: 0.0.0.0
+    port: 5335
+    do-ip4: yes
+    do-udp: yes
+    do-tcp: yes
+
+    # Access control
+    access-control: 127.0.0.0/8 allow
+    access-control: 10.0.0.0/8 allow
+    access-control: 172.16.0.0/12 allow
+    access-control: 192.168.0.0/16 allow
+
+    # Privacy and security
+    hide-identity: yes
+    hide-version: yes
+    harden-glue: yes
+    harden-dnssec-stripped: yes
+    use-caps-for-id: no
+    edns-buffer-size: 1232
+    prefetch: yes
+    num-threads: 1

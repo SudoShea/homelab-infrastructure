@@ -1,14 +1,14 @@
 # ==============================================================================
 # Role Task   : roles/podman_stack/tasks/main.yml
-# Description : Provisions rootless container volumes, lingering, and Podman containers
+# Description : Provisions rootless container volumes, configs, and Podman containers
 # Author      : SudoShea
-# Version     : 1.0.0
+# Version     : 1.0.1
 # License     : MIT
 # ==============================================================================
 ---
 - name: Ensure lingering is enabled for user container persistence
   ansible.builtin.command:
-    cmd: "loginctl enable-linger {{ ansible_user }}"
+    cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
   changed_when: false
 
 - name: Create persistent volume directories for rootless stack
@@ -17,11 +17,23 @@
     state: directory
     mode: '0755'
   loop:
-    - "{{ ansible_user_dir }}/homelab/pihole/etc-pihole"
-    - "{{ ansible_user_dir }}/homelab/pihole/etc-dnsmasq.d"
-    - "{{ ansible_user_dir }}/homelab/unbound/config"
-    - "{{ ansible_user_dir }}/homelab/caddy/config"
-    - "{{ ansible_user_dir }}/homelab/caddy/data"
+    - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole"
+    - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d"
+    - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config"
+    - "{{ ansible_facts['user_dir'] }}/homelab/caddy/config"
+    - "{{ ansible_facts['user_dir'] }}/homelab/caddy/data"
+
+- name: Deploy Unbound configuration template
+  ansible.builtin.template:
+    src: unbound.conf.j2
+    dest: "{{ ansible_facts['user_dir'] }}/homelab/unbound/config/unbound.conf"
+    mode: '0644'
+
+- name: Deploy Caddyfile configuration template
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ ansible_facts['user_dir'] }}/homelab/caddy/config/Caddyfile"
+    mode: '0644'
 
 - name: Deploy Unbound recursive DNS container
   containers.podman.podman_container:
@@ -31,7 +43,7 @@
     restart_policy: always
     network: host
     volumes:
-      - "{{ ansible_user_dir }}/homelab/unbound/config:/opt/unbound/etc/unbound"
+      - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config:/opt/unbound/etc/unbound"
 
 - name: Deploy Pi-hole DNS container
   containers.podman.podman_container:
@@ -42,11 +54,11 @@
     network: host
     env:
       TZ: "UTC"
-      FTLCONF_LOCAL_IPV4: "{{ ansible_default_ipv4.address }}"
+      FTLCONF_LOCAL_IPV4: "{{ ansible_facts['default_ipv4']['address'] }}"
       PIHOLE_DNS_: "127.0.0.1#5335"
     volumes:
-      - "{{ ansible_user_dir }}/homelab/pihole/etc-pihole:/etc/pihole"
-      - "{{ ansible_user_dir }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d"
+      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole:/etc/pihole"
+      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d"
 
 - name: Deploy Caddy reverse proxy container
   containers.podman.podman_container:
@@ -56,5 +68,5 @@
     restart_policy: always
     network: host
     volumes:
-      - "{{ ansible_user_dir }}/homelab/caddy/config:/etc/caddy"
-      - "{{ ansible_user_dir }}/homelab/caddy/data:/data"
+      - "{{ ansible_facts['user_dir'] }}/homelab/caddy/config:/etc/caddy"
+      - "{{ ansible_facts['user_dir'] }}/homelab/caddy/data:/data"
