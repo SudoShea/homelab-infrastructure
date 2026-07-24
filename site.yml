@@ -1,0 +1,13 @@
+# ==============================================================================
+# Playbook    : site.yml
+# Description : Rootless Podman Homelab Stack Deployment Playbook
+# Author      : SudoShea
+# Version     : 1.0.0
+# License     : MIT
+# ==============================================================================
+---
+- name: Deploy Rootless Podman Homelab Stack
+  hosts: homelab
+  gather_facts: true
+  roles:
+    - podman_stack
