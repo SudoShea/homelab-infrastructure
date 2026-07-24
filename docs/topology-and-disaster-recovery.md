@@ -83,17 +83,18 @@ ansible-playbook -i inventory.ini site.yml
 
 ## 🛠️ 4. Verification & Health Checks
 
-Once deployed, verify operational status using the following diagnostic commands:
+Verify operational status and container health using the following diagnostic commands:
+
 ```bash
-# 1. Verify Podman rootless container status
+# 1. Check Podman container status and active port mappings
 podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# 2. Test Unbound recursive DNS resolution directly
-dig @127.0.0.1 -p 5335 root-servers.net
-
-# 3. Test Pi-hole DNS interception
+# 2. Test Pi-hole DNS interception (Host Port 53)
 dig @127.0.0.1 -p 53 pi-hole.net
 
-# 4. Check Caddy reverse proxy response
-curl -I [http://pihole.local](http://pihole.local)
+# 3. Test Unbound recursive resolver directly inside container
+podman exec -it unbound drill @127.0.0.1 root-servers.net
+
+# 4. Check Pi-hole Web Interface (Host Port 8080)
+curl -I http://127.0.0.1:8080/admin/
 ```
