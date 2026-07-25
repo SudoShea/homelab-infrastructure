@@ -63,7 +63,7 @@ Executes daily at 02:00 AM on `<primary_host>`:
 * 03:00 AM Daily (`<secondary_host`): Pulls backups from `<primary_host` via `rsync -az` and immediately syncs them offsite using `rclone sync`.
 ```bash
 rclone sync  /home/<username>/backups/pihole/ <cloud_remote>:<cloud_backup_path>/`.
-
+```
 ---
 
 ## 🔓 5. Decryption & Restore Procedure
