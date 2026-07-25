@@ -4,7 +4,7 @@
 # Description : Generates client-side AES-256 encrypted tar archives of homelab
 #               container volumes with SHA-256 integrity hashes & 7-day rolling retention.
 # Author      : SudoShea
-# Version     : 1.2.0
+# Version     : 1.4.0
 # License     : MIT
 # ==============================================================================
 set -eu

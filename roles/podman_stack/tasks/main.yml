@@ -3,7 +3,7 @@
 # Description : Provisions rootless container volumes, configs, Podman containers,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.3.0
+# Version     : 1.4.0
 # License     : MIT
 # ==============================================================================
 ---
@@ -27,12 +27,6 @@
   ansible.builtin.template:
     src: unbound.conf.j2
     dest: "{{ ansible_facts['user_dir'] }}/homelab/unbound/config/unbound.conf"
-    mode: '0644'
-
-- name: Deploy Caddyfile configuration template
-  ansible.builtin.template:
-    src: Caddyfile.j2
-    dest: "{{ ansible_facts['user_dir'] }}/homelab/caddy/config/Caddyfile"
     mode: '0644'
 
 - name: Deploy Unbound recursive DNS container

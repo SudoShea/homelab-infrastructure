@@ -2,6 +2,11 @@
 
 All notable changes to the `homelab-infrastructure` project will be documented in this file.
 
+## [1.4.0] - 2026-07-25
+
+### Added
+- Authored `docs/pihole-v6-tls-setup.md` runbook defining Native Pi-hole v6 HTTPS setup, local Root CA generation, & automated cert renewals.
+
 ## [1.3.0] - 2026-07-24
 
 ### Removed
