@@ -61,11 +61,11 @@
       - "/etc/machine-id:/etc/machine-id:ro"
 
 - name: Limit local systemd journal retention size
-  community.general.ini_file:
+  ansible.builtin.lineinfile:
     path: /etc/systemd/journald.conf
-    section: Journal
-    option: SystemMaxUse
-    value: 4G
+    regexp: '^#?SystemMaxUse='
+    line: 'SystemMaxUse=4G'
+    insertafter: '^\[Journal\]'
     mode: '0644'
   become: true
   notify: Restart systemd-journald

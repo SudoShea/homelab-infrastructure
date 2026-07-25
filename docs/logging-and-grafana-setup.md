@@ -1,4 +1,4 @@
-# 📊 Centralized Logging & Grafana HTTPS Setup Guide
+# 📊 Centralised Logging & Grafana HTTPS Setup Guide
 
 **Note for Users**: This documentation contains placeholders in angle brackets (e.g., `<username>`, `<logging_server_ip>`, `<grafana_domain>`). Replace these placeholders with your actual environment details prior to executing the commands.
 
