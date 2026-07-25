@@ -1,0 +1,52 @@
+# ==============================================================================
+# File        : .gitignore
+# Description : Git ignore rules for homelab-infrastructure
+# Author      : SudoShea
+# Version     : 1.6.0
+# License     : MIT
+# ==============================================================================
+
+# --- Local Inventories & Overrides ---
+*.local.ini
+*.local.yml
+inventory.local*
+host_vars/*.local.yml
+group_vars/*.local.yml
+
+# --- Secrets, Vaults, and Private Keys ---
+.vault_pass
+*.vault
+*.key
+*.pem
+*.pfx
+*.p12
+
+# --- Backup Artifacts & Snapshots ---
+*.tar
+*.tar.gz
+*.tgz
+*.gpg
+*.bak
+*.tmp
+
+# --- Ansible Execution Artifacts ---
+*.retry
+ansible.log
+.ansible/
+
+# --- Python Bytecode & Environments ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+
+# --- OS & Editor Clutter ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
