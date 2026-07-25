@@ -1,0 +1,99 @@
+# ==============================================================================
+# Task        : roles/logging_server/tasks/main.yml
+# Description : Provisioning tasks for Grafana Loki and Grafana Dashboard with TLS
+# Author      : SudoShea
+# Version     : 1.6.0
+# License     : MIT
+# ==============================================================================
+---
+- name: Create Loki and Grafana volume directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ ansible_facts['user_dir'] }}/homelab/loki/config", mode: '0755' }
+    - { path: "{{ ansible_facts['user_dir'] }}/homelab/loki/data", mode: '0777' }
+    - { path: "{{ ansible_facts['user_dir'] }}/homelab/grafana/data", mode: '0777' }
+    - { path: "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs", mode: '0777' }
+    - { path: "{{ ansible_facts['user_dir'] }}/homelab/grafana/provisioning/dashboards", mode: '0755' }
+    - { path: "{{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards", mode: '0755' }
+
+- name: Generate self-signed TLS certificate for Grafana
+  ansible.builtin.command: >
+    openssl req -x509 -nodes -days 3650 -newkey rsa:2048
+    -keyout {{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.key
+    -out {{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.crt
+    -subj "/CN=192.168.0.102/O=Homelab"
+  args:
+    creates: "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.crt"
+
+- name: Set readable permissions on Grafana TLS cert and key
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: '0644'
+  loop:
+    - "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.key"
+    - "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.crt"
+
+- name: Deploy Loki config template
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ ansible_facts['user_dir'] }}/homelab/loki/config/loki.yml"
+    mode: '0644'
+
+- name: Deploy Grafana dashboard provisioning config
+  ansible.builtin.copy:
+    src: files/dashboards.yml
+    dest: "{{ ansible_facts['user_dir'] }}/homelab/grafana/provisioning/dashboards/dashboards.yml"
+    mode: '0644'
+
+- name: Deploy Systemd & Podman JSON dashboard
+  ansible.builtin.copy:
+    src: files/systemd-podman-logs.json
+    dest: "{{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards/systemd-podman-logs.json"
+    mode: '0644'
+
+- name: Deploy Grafana Loki container
+  containers.podman.podman_container:
+    name: loki
+    image: docker.io/grafana/loki:latest
+    state: started
+    recreate: true
+    restart_policy: always
+    network: host
+    memory: 8g
+    memory_swap: 8g
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - "{{ ansible_facts['user_dir'] }}/homelab/loki/config/loki.yml:/etc/loki/loki.yml:z"
+      - "{{ ansible_facts['user_dir'] }}/homelab/loki/data:/loki:z,U"
+
+- name: Deploy Grafana dashboard container
+  containers.podman.podman_container:
+    name: grafana
+    image: docker.io/grafana/grafana:latest
+    state: started
+    recreate: true
+    restart_policy: always
+    network: host
+    env:
+      GF_SERVER_PROTOCOL: "https"
+      GF_SERVER_CERT_FILE: "/etc/grafana/certs/grafana.crt"
+      GF_SERVER_CERT_KEY: "/etc/grafana/certs/grafana.key"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: "/var/lib/grafana/dashboards/systemd-podman-logs.json"
+    volumes:
+      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/data:/var/lib/grafana:z,U"
+      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs:/etc/grafana/certs:z"
+      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/provisioning:/etc/grafana/provisioning:z"
+      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards:/var/lib/grafana/dashboards:z"
+
+- name: Generate self-signed TLS certificate for Grafana with Domain SAN
+  ansible.builtin.command: >
+    openssl req -x509 -nodes -days 3650 -newkey rsa:2048
+    -keyout {{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.key
+    -out {{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.crt
+    -subj "/CN=grafana.local/O=Homelab"
+    -addext "basicConstraints = critical, CA:TRUE"
+    -addext "keyUsage = critical, digitalSignature, cRLSign, keyCertSign"
+    -addext "subjectAltName = DNS:grafana.local, IP:192.168.0.102"

@@ -2,7 +2,7 @@
 
 ![Ansible Linting](https://github.com/SudoShea/homelab-infrastructure/actions/workflows/lint.yml/badge.svg)
 
-An Infrastructure-as-Code repository for provisioning a rootless container stack (Pi-hole v6 and Unbound recursive DNS) managed via Podman across Debian/RHEL systems, featuring automated 3-2-1 AES-256 encrypted backups, native TLS, and host maintenance.
+An Infrastructure-as-Code repository for provisioning a rootless container stack (Pi-hole v6, Unbound recursive DNS, and centralized Loki/Grafana logging with Vector) managed via Podman across Debian/RHEL systems, featuring automated 3-2-1 AES-256 encrypted backups, native TLS, and host maintenance.
 
 **Note for Users**: Before deploying this stack, ensure you update `inventory.ini` and configuration templates with your environment's specific IP addresses, hostnames, and credentials.
 
@@ -13,6 +13,7 @@ An Infrastructure-as-Code repository for provisioning a rootless container stack
 * **Rootless Podman**: Serves container workloads without root privilege escalation.
 * **Pi-hole v6 (DNS Filter & Native HTTPS)**: Network-wide ad blocking, local DNS resolution, and embedded Civetweb TLS support.
 * **Unbound (Recursive DNS)**: Direct root-server DNS resolver with multi-architecture image detection (`aarch64`, `x86_64`).
+* **Centralized Observability Stack**: Centralized log aggregation via Vector (journald shipper), Loki (log indexing engine), and Grafana (TLS-encrypted dashboards).
 * **Multi-OS Host Support**: Automated maintenance for both Debian/Ubuntu (`unattended-upgrades`) and RHEL/Fedora (`dnf-automatic`).
 * **3-2-1 Encrypted Backup**: Nightly client-side AES-256 GPG snapshots, weekly restore verification, and automated offsite sync to cloud storage via `rclone`.
 
@@ -21,22 +22,24 @@ An Infrastructure-as-Code repository for provisioning a rootless container stack
 ## 🛠️ Repository Structure
 ```text
 homelab-infrastructure/
-├── .github/workflows/lint.yml   # Ansible-lint CI workflow
+├── .github/workflows/lint.yml            # Ansible-lint CI workflow
 ├── docs/
 │   ├── encrypted-backup-and-retention.md # Backup runbook & RPO/RTO metrics
+│   ├── logging-and-grafana-setup.md      # Centralized logging pipeline & Grafana HTTPS guide
 │   ├── pihole-v6-tls-setup.md            # Native Pi-hole v6 HTTPS setup & local Root CA guide
 │   └── topology-and-disaster-recovery.md # Network topology & disaster recovery runbook
-├── roles/podman_stack/
-│   ├── tasks/main.yml           # Core provisioning & backup automation tasks
-│   └── templates/
-│       └── unbound.conf.j2      # Unbound recursive DNS config
+├── roles/
+│   ├── logging_server/                   # Loki log engine & Grafana dashboard provisioning
+│   ├── logging_shipper/                  # Vector log collection agent service
+│   └── podman_stack/                     # Core Pi-hole, Unbound, & backup automation tasks
 ├── scripts/
-│   ├── backup.sh                # Nightly AES-256 container snapshot script
-│   └── test-restore.sh          # Weekly dry-run restore verification test
-├── inventory.ini                # Deployment inventory target
-├── CHANGELOG.md                 # Version release history
-├── README.md                    # Project documentation
-└── site.yml                     # Playbook entrypoint
+│   ├── backup.sh                         # Nightly AES-256 container snapshot script
+│   ├── bump-version.sh                   # Automated version and date header update tool
+│   └── test-restore.sh                   # Weekly dry-run restore verification test
+├── inventory.ini                         # Deployment inventory target
+├── CHANGELOG.md                          # Version release history
+├── README.md                             # Project documentation
+└── site.yml                              # Playbook entrypoint
 ```
 ---
 
@@ -47,6 +50,7 @@ homelab-infrastructure/
 | [`docs/encrypted-backup-and-retention.md`](docs/encrypted-backup-and-retention.md) | 3-2-1 Backup Architecture, AES-256 GPG encryption, SHA-256 verification, & restore testing |
 | [`docs/topology-and-disaster-recovery.md`](docs/topology-and-disaster-recovery.md) | Homelab network topology, container boundaries, health checks, & cold-boot recovery |
 | [`docs/pihole-v6-tls-setup.md`](docs/pihole-v6-tls-setup.md) | Native Pi-hole v6 HTTPS setup, local Root CA generation, & automated cert renewals |
+| [`docs/logging-and-grafana-setup.md`](docs/logging-and-grafana-setup.md) | Centralized logging pipeline (Vector → Loki → Grafana), local Root CA HTTPS setup, & dashboard provisioning |
 
 ---
 

@@ -2,7 +2,7 @@
 # Workflow    : .github/workflows/lint.yml
 # Description : GitHub Actions CI workflow for Ansible-Lint static analysis
 # Author      : SudoShea
-# Version     : 1.0.0
+# Version     : 1.6.0
 # License     : MIT
 # ==============================================================================
 name: Ansible Linting

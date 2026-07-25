@@ -1,0 +1,71 @@
+# ==============================================================================
+# Task        : roles/logging_shipper/tasks/main.yml
+# Description : Provisioning tasks for Vector log collector container
+# Author      : SudoShea
+# Version     : 1.6.0
+# License     : MIT
+# ==============================================================================
+---
+- name: Ensure systemd journal directories exist on host
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /var/log/journal
+    - /run/log/journal
+  become: true
+
+- name: Add user to systemd-journal group
+  ansible.builtin.user:
+    name: "{{ ansible_facts['user_id'] }}"
+    groups: systemd-journal
+    append: true
+  become: true
+
+- name: Grant user recursive access and default ACLs for journal logs
+  ansible.builtin.shell: |
+    setfacl -R -m u:{{ ansible_facts['user_id'] }}:rx,d:u:{{ ansible_facts['user_id'] }}:rx /var/log/journal /run/log/journal 2>/dev/null || true
+    setfacl -R -m m::rx /var/log/journal /run/log/journal 2>/dev/null || true
+  become: true
+  changed_when: false
+
+- name: Create Vector directory structure
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/homelab/vector"
+    state: directory
+    mode: '0755'
+
+- name: Deploy Vector configuration template
+  ansible.builtin.template:
+    src: vector.toml.j2
+    dest: "{{ ansible_facts['user_dir'] }}/homelab/vector/vector.toml"
+    mode: '0644'
+
+- name: Deploy Vector log collector container
+  containers.podman.podman_container:
+    name: vector
+    image: docker.io/timberio/vector:latest-debian
+    state: started
+    recreate: true
+    restart_policy: always
+    network: host
+    user: "0:0"
+    group_add:
+      - keep-groups
+    command: "--config /etc/vector/vector.toml"
+    volumes:
+      - "{{ ansible_facts['user_dir'] }}/homelab/vector/vector.toml:/etc/vector/vector.toml:z"
+      - "/var/log/journal:/var/log/journal:ro"
+      - "/run/log/journal:/run/log/journal:ro"
+      - "/etc/machine-id:/etc/machine-id:ro"
+
+- name: Limit local systemd journal retention size
+  ansible.builtin.ini_file:
+    path: /etc/systemd/journald.conf
+    section: Journal
+    option: SystemMaxUse
+    value: 4G
+    mode: '0644'
+  become: true
+  notify: Restart systemd-journald

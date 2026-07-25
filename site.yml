@@ -1,8 +1,8 @@
 # ==============================================================================
 # Playbook    : site.yml
-# Description : Rootless Podman Homelab Stack, Backup Automation, & Offsite Sync
+# Description : Master Ansible playbook for homelab infrastructure deployment
 # Author      : SudoShea
-# Version     : 1.5.0
+# Version     : 1.6.0
 # License     : MIT
 # ==============================================================================
 ---
@@ -30,3 +30,15 @@
         job: >-
           rsync -az <username>@<primary_hostname>:~/backups/ {{ ansible_facts['user_dir'] }}/backups/pihole/ &&
           rclone sync {{ ansible_facts['user_dir'] }}/backups/pihole/ <cloud_remote>:<cloud_backup_path>
+
+- name: Deploy Centralized Logging Server (Loki & Grafana)
+  hosts: storage_servers
+  gather_facts: true
+  roles:
+    - logging_server
+
+- name: Deploy Log Shipper (Vector)
+  hosts: homelab
+  gather_facts: true
+  roles:
+    - logging_shipper

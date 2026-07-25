@@ -4,7 +4,7 @@
 # Description : Performs automated checksum verification and isolated dry-run
 #               decryption/extraction tests on the latest homelab backup.
 # Author      : SudoShea
-# Version     : 1.5.0
+# Version     : 1.6.0
 # License     : MIT
 # ==============================================================================
 set -eu

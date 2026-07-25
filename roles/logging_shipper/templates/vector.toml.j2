@@ -1,0 +1,62 @@
+# ==============================================================================
+# Template    : roles/logging_shipper/templates/vector.toml.j2
+# Description : Vector log collector configuration (Journald & Syslog -> Loki)
+# Author      : SudoShea
+# Version     : 1.6.0
+# License     : MIT
+# ==============================================================================
+data_dir = "/var/lib/vector"
+
+# --- SOURCES ---
+[sources.journald_logs]
+type = "journald"
+current_boot_only = true
+
+[sources.syslog_listener]
+type = "syslog"
+address = "0.0.0.0:10514"
+mode = "udp"
+
+# --- TRANSFORMS ---
+[transforms.parse_logs]
+type = "remap"
+inputs = ["journald_logs", "syslog_listener"]
+source = '''
+.host = "{{ inventory_hostname }}"
+
+if exists(._SYSTEMD_UNIT) {
+  raw_unit = to_string(._SYSTEMD_UNIT) ?? "system"
+  .container_name = replace(raw_unit, r'[^a-zA-Z0-9_\-\.]', "_")
+} else if exists(.SYSLOG_IDENTIFIER) {
+  raw_unit = to_string(.SYSLOG_IDENTIFIER) ?? "system"
+  .container_name = replace(raw_unit, r'[^a-zA-Z0-9_\-\.]', "_")
+} else if exists(.appname) {
+  raw_unit = to_string(.appname) ?? "system"
+  .container_name = replace(raw_unit, r'[^a-zA-Z0-9_\-\.]', "_")
+} else {
+  .container_name = "system"
+}
+'''
+
+# --- SINKS ---
+[sinks.loki_sink]
+type = "loki"
+inputs = ["parse_logs"]
+endpoint = "http://{{ hostvars[groups['storage_servers'][0]]['ansible_host'] }}:3100"
+encoding.codec = "json"
+dangerously_allow_unconfined_template_resolution = true
+
+[sinks.loki_sink.healthcheck]
+enabled = false
+
+[sinks.loki_sink.batch]
+max_bytes = 1048576
+timeout_secs = 1
+
+[sinks.loki_sink.request]
+concurrency = 2
+
+[sinks.loki_sink.labels]
+host = "{{ inventory_hostname }}"
+source = "vector"
+container = "{% raw %}{{ container_name }}{% endraw %}"

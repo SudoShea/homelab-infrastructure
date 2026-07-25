@@ -1,0 +1,13 @@
+# ==============================================================================
+# File        : roles/logging_shipper/handlers/main.yml
+# Description : Handlers for vector logging shipper role
+# Author      : SudoShea
+# Version     : 1.6.0
+# License     : MIT
+# ==============================================================================
+---
+- name: Restart systemd-journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+  become: true
