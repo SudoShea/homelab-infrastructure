@@ -17,7 +17,7 @@
 # ------------------------------------------------------------------------------
 - name: Set Unbound image based on host architecture
   ansible.builtin.set_fact:
-    unbound_image: "{{ 'mvance/unbound-rpi' if ansible_facts['architecture'] in ['aarch64', 'armv7l'] else 'mvance/unbound' }}"
+    podman_stack_unbound_image: "{{ 'mvance/unbound-rpi' if ansible_facts['architecture'] in ['aarch64', 'armv7l'] else 'mvance/unbound' }}"
 
 - name: Create persistent volume directories for rootless stack
   ansible.builtin.file:
@@ -39,7 +39,7 @@
 - name: Deploy Unbound recursive DNS container
   containers.podman.podman_container:
     name: unbound
-    image: "docker.io/{{ unbound_image }}:latest"
+    image: "docker.io/{{ podman_stack_unbound_image }}:latest"
     state: started
     restart_policy: always
     network: host
