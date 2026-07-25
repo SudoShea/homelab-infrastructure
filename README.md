@@ -2,17 +2,19 @@
 
 ![Ansible Linting](https://github.com/SudoShea/homelab-infrastructure/actions/workflows/lint.yml/badge.svg)
 
-An Ansible-driven Infrastructure-as-Code repository for provisioning a rootless container stack (Pi-hole, and Unbound recursive DNS) managed via Podman, featuring automated 3-2-1 AES-256 encrypted backups and host maintenance.
+An Infrastructure-as-Code repository for provisioning a rootless container stack (Pi-hole v6 and Unbound recursive DNS) managed via Podman across Debian/RHEL systems, featuring automated 3-2-1 AES-256 encrypted backups, native TLS, and host maintenance.
+
+**Note for Users**: Before deploying this stack, ensure you update `inventory.ini` and configuration templates with your environment's specific IP addresses, hostnames, and credentials.
 
 ---
 
 ## ⚡ Architecture
 
-* **Rootless Podman:** Serves container workloads without root privilege escalation.
-* **Pi-hole (DNS Filter):** Network-wide ad blocking and local DNS resolution.
-* **Unbound (Recursive DNS):** Direct root-server DNS resolver (bypasses upstream ISP/third-party tracking).
-* **3-2-1 Encrypted Backup:** Nightly client-side AES-256 GPG snapshots, weekly restore verification, and automated offsite sync to Google Drive via `rclone`.
-* **Automated Host Maintenance:** Unattended security patching via `unattended-upgrades` with automated storage cleanup.
+* **Rootless Podman**: Serves container workloads without root privilege escalation.
+* **Pi-hole v6 (DNS Filter & Native HTTPS)**: Network-wide ad blocking, local DNS resolution, and embedded Civetweb TLS support.
+* **Unbound (Recursive DNS)**: Direct root-server DNS resolver with multi-architecture image detection (`aarch64`, `x86_64`).
+* **Multi-OS Host Support**: Automated maintenance for both Debian/Ubuntu (`unattended-upgrades`) and RHEL/Fedora (`dnf-automatic`).
+* **3-2-1 Encrypted Backup**: Nightly client-side AES-256 GPG snapshots, weekly restore verification, and automated offsite sync to cloud storage via `rclone`.
 
 ---
 
@@ -22,6 +24,7 @@ homelab-infrastructure/
 ├── .github/workflows/lint.yml   # Ansible-lint CI workflow
 ├── docs/
 │   ├── encrypted-backup-and-retention.md # Backup runbook & RPO/RTO metrics
+│   ├── pihole-v6-tls-setup.md            # Native Pi-hole v6 HTTPS setup & local Root CA guide
 │   └── topology-and-disaster-recovery.md # Network topology & disaster recovery runbook
 ├── roles/podman_stack/
 │   ├── tasks/main.yml           # Core provisioning & backup automation tasks
@@ -57,15 +60,21 @@ cd homelab-infrastructure
 
 ansible-galaxy collection install containers.podman
 ```
-### 2. Run Dry-Run Check (Safe Mode)
+### 2. Configure Inventory Target
+Before running the deployment, ensure your environment-specific details are set:
+* `inventory.ini`: Update with your target host IPs, SSH users, and host aliases.
+* `roles/podman_stack/tasks/main.yml`: Update container environment variables such as `TZ` (timezone), `FTLCONF_webserver_domain`, and (if using Nebula Sync) primary/replica cluster credentials.
+* `site.yml`: Verify your storage server targets and cloud backup remote paths.
+
+### 3. Run Dry-Run Check (Safe Mode)
 Verify tasks and template rendering against your target system without applying changes:
 ```bash
-ansible-playbook -i inventory.ini site.yml --check --diff
+ansible-playbook -i inventory.ini site.yml --check --diff -K
 ```
-### 3. Deploy Stack
-Execute the playbook to provision persistent volumes, templates, rootless containers, backup cron jobs, and maintenance tasks:
+### 4. Deploy Stack
+Execute the playbook to provision persistent volumes, templates, rootless containers, backup cron jobs, and host security tasks:
 ```bash
-ansible-playbook -i inventory.ini site.yml
+ansible-playbook -i inventory.ini site.yml -K
 ```
 
 ---

@@ -4,7 +4,7 @@
 # Description : Performs automated checksum verification and isolated dry-run
 #               decryption/extraction tests on the latest homelab backup.
 # Author      : SudoShea
-# Version     : 1.4.0
+# Version     : 1.5.0
 # License     : MIT
 # ==============================================================================
 set -eu
@@ -41,8 +41,8 @@ gpg --batch --decrypt --passphrase-file "${PASSPHRASE_FILE}" "${LATEST_BACKUP}" 
 
 # Step 4: Validate Critical Files
 echo "[4/4] Validating extracted container state..."
-if [ -f "${TEST_DIR}/pihole/etc-pihole/pihole-FTL.db" ] && [ -f "${TEST_DIR}/pihole/Caddyfile" ]; then
-    echo "   ↳ Pi-hole FTL database and Caddyfile verified intact!"
+if [ -f "${TEST_DIR}/pihole/etc-pihole/pihole-FTL.db" ]; then
+    echo "   ↳ Pi-hole FTL database verified intact!"
 else
     echo "❌ Error: Expected files missing in restore output!" >&2
     rm -rf "${TEST_DIR}"

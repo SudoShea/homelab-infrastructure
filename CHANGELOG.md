@@ -2,10 +2,22 @@
 
 All notable changes to the `homelab-infrastructure` project will be documented in this file.
 
+## [1.5.0] - 2026-07-25
+
+### Added
+* Multi-OS support across Debian/Ubuntu and RHEL/Fedora hosts (`dnf-automatic`, automated package cleanup timers).
+* Dynamic architecture detection for Unbound container images (`aarch64` vs `x86_64`).
+* Support for Pi-hole v6 replication via Nebula Sync configuration task.
+
+### Changed
+* **Repository Sanitization**: Fully sanitised all playbooks, configs, inventory, and documentation files to replace user-specific credentials, IPs, hostnames, and paths with generic placeholders (`<item>`).
+* **SELinux Compatibility**: Added `:z` volume flags to Podman volume mounts for RHEL/CentOS/Fedora compatibility.
+* **Documentation Standards**: Updated all runbooks (`topology-and-disaster-recovery.md`, `encrypted-backup-and-retention.md`, `pihole-v6-tls-setup.md`, `README.md`) with explicit user instructions on configuration placeholders, command flags (`-K`), and setup prerequisites.
+
 ## [1.4.0] - 2026-07-25
 
 ### Added
-- Authored `docs/pihole-v6-tls-setup.md` runbook defining Native Pi-hole v6 HTTPS setup, local Root CA generation, & automated cert renewals.
+* Authored `docs/pihole-v6-tls-setup.md` runbook defining Native Pi-hole v6 HTTPS setup, local Root CA generation, & automated cert renewals.
 
 ## [1.3.0] - 2026-07-24
 

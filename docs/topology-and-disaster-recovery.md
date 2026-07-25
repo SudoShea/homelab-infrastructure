@@ -1,16 +1,18 @@
 # 🗺️ Homelab Network Topology & Disaster Recovery Runbook
 
+**Note for Users**: This documentation contains placeholders in angle brackets (e.g., `<github_username>`, `<primary_storage_node>`, `<cloud_storage_provider>`). Replace these placeholders with your actual environment details prior to executing the commands.
+
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.3.0
-* **Last Updated:** 2026-07-24
+* **Version:** 1.5.0
+* **Last Updated:** 2026-07-25
 
 ---
 
 ## 📐 1. Network Topology & Traffic Flow
 
 ### Core Architecture Overview
-The homelab environment operates on a segmented local network. External web traffic is routed via Caddy as an internal reverse proxy, while all host DNS requests are handled locally by Pi-hole chained directly to Unbound for recursive upstream resolution.
+The homelab environment operates on a segmented local network. External web traffic is routed natively via HTTPS to Pi-hole v6, while all host DNS requests are handled locally by Pi-hole chained directly to Unbound for recursive upstream resolution.
 
 ```text
 [ Local Clients ]
@@ -59,7 +61,7 @@ cd homelab-infrastructure
 ansible-galaxy collection install containers.podman
 ```
 ### Step 2: Restore Persistent Volume Data
-Fetch the latest encrypted backup archive from local mirror (`HOME-SERVER`) or offsite cloud (`Google Drive`), verify checksums, and extract using `podman unshare` [`docs/encrypted-backup-and-retention.md`](docs/encrypted-backup-and-retention.md):
+Fetch the latest encrypted backup archive from your local mirror (`<primary_storage_node>`) or offsite cloud (`<cloud_storage_provider>`), verify checksums, and extract using `podman unshare` (see [`docs/encrypted-backup-and-retention.md`](docs/encrypted-backup-and-retention.md)):
 ```bash
 # 1. Verify SHA-256 Checksum Integrity
 sha256sum -c homelab_backup_latest.tar.gz.gpg.sha256
@@ -71,12 +73,12 @@ gpg --batch --decrypt --passphrase-file ~/.backup_passphrase \
 ### Step 3: Execute Playbook Dry-Run
 Verify path bindings, template resolution, and user permissions before starting containers:
 ```bash
-ansible-playbook -i inventory.ini site.yml --check --diff
+ansible-playbook -i inventory.ini site.yml --check --diff -K
 ```
 ### Step 4: Full Active Deployment
 Deploy volumes, Jinja2 configuration templates, and launch rootless containers and re-establish cron backup schedules:
 ```bash
-ansible-playbook -i inventory.ini site.yml
+ansible-playbook -i inventory.ini site.yml -K
 ```
 ---
 

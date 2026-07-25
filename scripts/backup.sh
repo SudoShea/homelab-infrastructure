@@ -4,14 +4,14 @@
 # Description : Generates client-side AES-256 encrypted tar archives of homelab
 #               container volumes with SHA-256 integrity hashes & 7-day rolling retention.
 # Author      : SudoShea
-# Version     : 1.4.0
+# Version     : 1.5.0
 # License     : MIT
 # ==============================================================================
 set -eu
 
 # Configuration Parameters
 BACKUP_DIR="${HOME}/backups"
-TARGET_DIR="${HOME}/docker"
+TARGET_DIR="${HOME}/homelab"
 DATE=$(date +%Y%m%d_%H%M%S)
 ARCHIVE_NAME="homelab_backup_${DATE}.tar.gz.gpg"
 PASSPHRASE_FILE="${HOME}/.backup_passphrase"

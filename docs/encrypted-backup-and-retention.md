@@ -1,9 +1,11 @@
 # 🔐 Encrypted Backup & Retention Policy Runbook
 
+**Note for Users**: This documentation contains placeholders in angle brackets (e.g., `<username>`, `<primary_hostname>`, `<secondary_hostname>`, `<cloud_remote>`). Replace these placeholders with your actual environment details prior to executing the commands.
+
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.3.0
-* **Last Updated:** 2026-07-24
+* **Version:** 1.5.0
+* **Last Updated:** 2026-07-25
 
 ---
 
@@ -12,9 +14,9 @@
 This runbook defines the automated 3-2-1 backup pipeline, client-side encryption model, lifecycle retention schedules, restore testing protocols, and host maintenance standards for all persistent container data within the `homelab-infrastructure` stack.
 
 ### Backup Target Volume
-* **Path:** `~/docker/pihole/`
-  * `etc-pihole/` & `etc-dnsmasq.d/` (Pi-hole)
-  * `unbound/` (Unbound configuration)
+* **Path:** `~/homelab/`
+  * `pihole/etc-pihole/` & `pihole/etc-dnsmasq.d/` (Pi-hole configuration & databases)
+  * `unbound/config/` (Unbound DNS recursive configuration)
 
 ---
 
@@ -27,8 +29,8 @@ All persistent data is archived and encrypted **client-side before leaving the h
 
 ```text
  ┌──────────────────────┐         ┌──────────────────────┐         ┌──────────────────────┐
- │    Primary Host      │  rsync  │   Secondary Host     │ rclone  │    Offsite Cloud     │
- │       (pihole)       ├────────►│    (HOME-SERVER)     ├────────►│    (Google Drive)    │
+ │     Primary Host     │  rsync  │    Secondary Host    │ rclone  │    Offsite Cloud     │
+ │ (<primary_hostname>) ├────────►│(<secondary_hostname>)├────────►│(<cloud_provider>)    │
  │ Snapshot & Encrypt   │  03:00  │ Local Copy Mirror    │  03:00  │ Encrypted Offsite    │
  └──────────────────────┘         └──────────────────────┘         └──────────────────────┘
 ```
@@ -38,9 +40,9 @@ All persistent data is archived and encrypted **client-side before leaving the h
 
 | Stage | Frequency | Retention Window | Storafe Footprint | Objective |
 | :--- | :--- | :--- | :--- | :--- |
-| **Local Primary** (`pihole`) | Daily @ 02:00 AM | 7 Days | ~230MB | Fast local rollback for corrupted volumes or misconfigurations. |
-| **Secondary Mirror** (`HOME-SERVER`) | Daily @ 03:00 AM | 7 Days | ~230MB | On-premises hardware fault tolerance. |
-| **Offsite Cloud** (`Google Drive`) | Daily @ 03:00 AM | 7 Days | ~230MB | Offsite disaster recovery via `rclone sync`. |
+| **Local Primary** (`<primary_host>`) | Daily @ 02:00 AM | 7 Days | ~230MB | Fast local rollback for corrupted volumes or misconfigurations. |
+| **Secondary Mirror** (`<secondary_host>`) | Daily @ 03:00 AM | 7 Days | ~230MB | On-premises hardware fault tolerance. |
+| **Offsite Cloud** (`<cloud_provider>`) | Daily @ 03:00 AM | 7 Days | ~230MB | Offsite disaster recovery via `rclone sync`. |
 
 * Recovery Point Objective (RPO): `< 24 hours` (Nightly automated snapshots).
 * Recovery Time Objective (RTO): `< 15` minutes to decrypt, unpack, and launch the stack.
@@ -50,7 +52,7 @@ All persistent data is archived and encrypted **client-side before leaving the h
 ## ⚙️ 4. Automated Backup Script
 
 **Backup Execution** (`scripts/backup.sh`)
-Executes daily at 02:00 AM on `pihole`:
+Executes daily at 02:00 AM on `<primary_host>`:
 
 1. Archives `~/homelab/` volumes using `podman unshare`.
 2. Encrypts stream using AES-256 GPG with symmetric passphrase.
@@ -58,7 +60,9 @@ Executes daily at 02:00 AM on `pihole`:
 4. Enforces 7-day rolling local retention by deleting older archives (`-mtime +7`).
 
 **Offsite Replication Schedule** (`cron`)
-* 03:00 AM Daily (`HOME-SERVER`): Pulls backups from `pihole` via `rsync -az` and immediately syncs them offsite to Google Drive using `rclone sync /home/sclark/backups/pihole/ gdrive:HomelabBackups/`.
+* 03:00 AM Daily (`<secondary_host`): Pulls backups from `<primary_host` via `rsync -az` and immediately syncs them offsite using `rclone sync`.
+```bash
+rclone sync  /home/<username>/backups/pihole/ <cloud_remote>:<cloud_backup_path>/`.
 
 ---
 
@@ -81,7 +85,7 @@ podman unshare tar -xzf homelab_restored.tar.gz -C ~/
 ```
 ### Step 4: Restart Stack
 ```bash
-ansible-playbook -i inventory.ini site.yml
+ansible-playbook -i inventory.ini site.yml -K
 ```
 ---
 
@@ -98,9 +102,10 @@ Executes automatically every Sunday at 02:30 AM via `cron`:
 
 ## 🧹 7. Host Security & Automated Maintenance Policy
 To ensure the primary host remains secure without risking container downtime:
-* **Security Patches**: `unattended-upgrades` automatically downloads and applies Debian security patches daily (`/etc/apt/apt.conf.d/20auto-upgrades`).
-* **Disk Space Protection**: Automatic removal of unused dependencies (`Unattended-Upgrade::Remove-Unused-Dependencies "true"`).
-* **Weekly Maintenance**: Scheduled weekly system update and package cleanup runs every Sunday at 04:00 AM (`apt update && apt upgrade -y && apt autoremove -y && apt clean`).
+* **Debian / Ubuntu Security Patches**: `unattended-upgrades` automatically downloads and applies security patches daily (`/etc/apt/apt.conf.d/20auto-upgrades`).
+* **RHEL / Fedora Security Patches**: `dnf-automatic` manages automated system package updates via systemd timer (`dnf-automatic.timer`).
+* **Disk Space Protection**: Automatic removal of unused dependencies.
+* **Weekly Maintenance**: Scheduled weekly system update and package cleanup runs every Sunday at 04:00 AM (`apt` or `dnf` autoremove and clean).
 
 ---
 

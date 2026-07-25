@@ -1,6 +1,13 @@
 # 🔒 Native Pi-hole v6 HTTPS & Local Root CA Setup Guide
 
-This guide details how to generate a private Root Certificate Authority (CA), issue a local TLS certificate, and natively configure **Pi-hole v6** for HTTPS without relying on an external reverse proxy (like Caddy or Nginx).
+**Note for Users**: This documentation contains placeholders in angle brackets (e.g., `<username>`, `<pihole_ip>`, `<pihole_domain>`). Replace these placeholders with your actual environment details prior to executing the commands.
+
+* **Repository:** `homelab-infrastructure`
+* **Author:** SudoShea
+* **Version:** 1.5.0
+* **Last Updated:** 2026-07-25
+
+This guide details how to generate a private Root Certificate Authority (CA), issue a local TLS certificate, and natively configure Pi-hole v6 for HTTPS without relying on an external reverse proxy (like Caddy or Nginx).
 
 ---
 
@@ -14,7 +21,7 @@ This guide details how to generate a private Root Certificate Authority (CA), is
 
 ## 🛠️ Step-by-Step Implementation
 
-### Step 1: Create a Local Root CA (Local Machine)
+### Step 1: Create a Local Root CA (Local Workstation)
 On your primary management workstation, create a private Root CA that will sign your homelab certificates:
 
 ```bash
@@ -25,12 +32,12 @@ openssl genrsa -out rootCA.key 4096
 
 # 2. Generate Root CA Certificate (5-year validity)
 openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1825 \
-  -out rootCA.pem -subj "/C=AU/O=Homelab/CN=Homelab Root CA"
+  -out rootCA.pem -subj "/C=<country>/O=<organisation>/CN=<ca_name>"
 ```
 ### Step 2: Trust the Root CA on Client Operating Systems
 Fedora / RHEL / CentOS:
 ```bash
-sudo cp rootCA.pem /etc/pki/ca-trust/source/anchors/homelab-root.pem
+sudo cp rootCA.pem /etc/pki/ca-trust/source/anchors/<ca_name>.pem
 sudo update-ca-trust
 ```
 Firefox Browser (Independent Trust Store):
@@ -41,15 +48,15 @@ Firefox Browser (Independent Trust Store):
 
 ### Step 3: Issue & Format Pi-hole Certificate
 1. Create a SAN extension config file (`pihole-ext.cnf`):
-```toml
+```ini
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
 subjectAltName = @alt_names
 
 [alt_names]
-DNS.1 = pihole.local
-IP.1 = <Your PiHole IP>
+DNS.1 = <pihole_domain>
+IP.1 = <pihole_ip>
 ```
 2. Generate private key, CSR, and sign the certificate:
 ```bash
@@ -57,7 +64,7 @@ IP.1 = <Your PiHole IP>
 openssl genrsa -out pihole.key 2048
 
 # Create Certificate Signing Request (CSR)
-openssl req -new -key pihole.key -out pihole.csr -subj "/C=AU/O=Homelab/CN=pihole.local"
+openssl req -new -key pihole.key -out pihole.csr -subj "/C=<country>/O=<organisation>/CN=<pihole_domain>"
 
 # Sign with Root CA (397 days validity)
 openssl x509 -req -in pihole.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial \
@@ -76,10 +83,10 @@ cat pihole-unencrypted.key pihole.crt > tls.pem
 Copy `tls.pem` to your Pi-hole host and ensure correct volume pathing and container user ownership (UID `1000` for standard Pi-hole rootless containers):
 ```bash
 # Copy to remote host
-scp tls.pem user@<Your PiHole IP>:/home/user/tls.pem
+scp tls.pem <username>@<pihole_ip>:/home/<username>/tls.pem
 
 # Move into persistent volume directory, fix ownership (UID 1000), and restart
-ssh user@<Your PiHole IP> "sudo mv ~/tls.pem ~/homelab/pihole/etc-pihole/tls.pem && \
+ssh <username>@<pihole_ip> "sudo mv ~/tls.pem ~/homelab/pihole/etc-pihole/tls.pem && \
   sudo chown 1000:1000 ~/homelab/pihole/etc-pihole/tls.pem && \
   sudo chmod 600 ~/homelab/pihole/etc-pihole/tls.pem && \
   podman restart pihole"
@@ -96,27 +103,27 @@ set -e
 cd ~/homelab-ca
 
 openssl genrsa -out pihole.key 2048
-openssl req -new -key pihole.key -out pihole.csr -subj "/C=AU/O=Homelab/CN=pihole.local"
+openssl req -new -key pihole.key -out pihole.csr -subj "/C=<country>/O=<organisation>CN=<pihole_domain>"
 openssl x509 -req -in pihole.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out pihole.crt -days 397 -sha256 -extfile pihole-ext.cnf
 
 openssl rsa -in pihole.key -out pihole-unencrypted.key
 cat pihole-unencrypted.key pihole.crt > tls.pem
 
-scp tls.pem <user>@<Your PiHole IP>:/home/<user>/tls.pem
-ssh <user>@<Your PiHole IP> "sudo mv /home/<user>/tls.pem /home/<user>/homelab/pihole/etc-pihole/tls.pem && sudo chown 1000:1000 /home/<user>/homelab/pihole/etc-pihole/tls.pem && sudo chmod 600 /home/<user>/homelab/pihole/etc-pihole/tls.pem && podman restart pihole"
+scp tls.pem <username>@<pihole_ip>:/home/<username>/tls.pem
+ssh <username>@<pihole_ip> "sudo mv /home/<username>/tls.pem /home/<username>/homelab/pihole/etc-pihole/tls.pem && sudo chown 1000:1000 /home/<username>/homelab/pihole/etc-pihole/tls.pem && sudo chmod 600 /home/<username>/homelab/pihole/etc-pihole/tls.pem && podman restart pihole"
 
 echo "Pi-hole TLS certificate renewed successfully."
 ```
-Add to cron (`crontab -e`):
+Schedule annual execution via `crontab -e`:
 ```plaintext
-0 0 1 1 * /home/<user>/homelab-ca/renew-pihole-cert.sh >> /home/<user>/homelab-ca/renewal.log 2>&1
+0 0 1 1 * /home/<username>/homelab-ca/renew-pihole-cert.sh >> /home/<username>/homelab-ca/renewal.log 2>&1
 ```
 ---
 
 ## 🔍 Verification & Troubleshooting
 
 ### 1. Verify Webserver Startup
-After restarting the Pi-hole container, verify that Civetweb successfully bound the TLS context:
+After restarting the Pi-hole container, verify that Civetweb successfully loaded the TLS bundle:
 
 ```bash
 podman logs --tail 20 pihole
