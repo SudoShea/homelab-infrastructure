@@ -2,6 +2,22 @@
 
 All notable changes to the `homelab-infrastructure` project will be documented in this file.
 
+## [1.6.1] - 2026-07-26
+
+### Fixed
+- Fixed Ansible linter module resolution by replacing `ansible.builtin.ini_file` with `community.general.ini_file` in `roles/logging_shipper`.
+- Removed obsolete self-signed TLS generation task from `roles/logging_server` to enforce local Root CA deployment and ensure task idempotency.
+- Corrected extra blank line formatting in `roles/logging_server/tasks/main.yml`.
+
+## [1.6.0] - 2026-07-26
+
+### Added
+- Integrated centralised observability stack featuring **Loki** (log indexing engine), **Grafana** (HTTPS UI), and **Vector** (systemd journald log shipper).
+- Enabled native TLS support on port `3000` for Grafana, secured by the local homelab Root CA (`rootCA.pem`).
+- Added `roles/logging_server` and `roles/logging_shipper` Ansible roles for automated stack deployment.
+- Added automated repository versioning script (`scripts/bump-version.sh`) supporting tracked and untracked templates (`.j2`, `.toml`, `.conf`, `.ini`, `.json`).
+- Published comprehensive documentation guide at `docs/logging-and-grafana-setup.md`.
+
 ## [1.5.0] - 2026-07-25
 
 ### Added
