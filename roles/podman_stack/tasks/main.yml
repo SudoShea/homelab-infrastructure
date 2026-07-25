@@ -3,7 +3,7 @@
 # Description : Provisions rootless container volumes, configs, Podman containers,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.4.0
+# Version     : 1.5.0
 # License     : MIT
 # ==============================================================================
 ---
@@ -11,6 +11,13 @@
   ansible.builtin.command:
     cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
   changed_when: false
+
+# ------------------------------------------------------------------------------
+# 1. Dynamic Architecture Detection for Unbound Image
+# ------------------------------------------------------------------------------
+- name: Set Unbound image based on host architecture
+  ansible.builtin.set_fact:
+    unbound_image: "{{ 'mvance/unbound-rpi' if ansible_facts['architecture'] in ['aarch64', 'armv7l'] else 'mvance/unbound' }}"
 
 - name: Create persistent volume directories for rootless stack
   ansible.builtin.file:
@@ -32,12 +39,12 @@
 - name: Deploy Unbound recursive DNS container
   containers.podman.podman_container:
     name: unbound
-    image: docker.io/mvance/unbound-rpi:latest
+    image: "docker.io/{{ unbound_image }}:latest"
     state: started
     restart_policy: always
     network: host
     volumes:
-      - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config:/opt/unbound/etc/unbound"
+      - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config:/opt/unbound/etc/unbound:z"
 
 - name: Deploy Pi-hole DNS container
   containers.podman.podman_container:
@@ -47,14 +54,35 @@
     restart_policy: always
     network: host
     env:
-      TZ: "Australia/Adelaide"
+      TZ: "<timezone>"
       FTLCONF_LOCAL_IPV4: "{{ ansible_facts['default_ipv4']['address'] }}"
       FTLCONF_dns_upstreams: "127.0.0.1#5335"
       PIHOLE_DNS_: "127.0.0.1#5335"
       FTLCONF_webserver_port: "80,443s"
+      FTLCONF_webserver_domain: "<secondary_domain>"
     volumes:
-      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole:/etc/pihole"
-      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d"
+      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole:/etc/pihole:z"
+      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d:z"
+
+# ==============================================================================
+# Pi-hole v6 Auto-Replication (Nebula Sync)
+# ==============================================================================
+
+- name: Deploy Nebula Sync for Pi-hole v6 replication
+  containers.podman.podman_container:
+    name: nebula-sync
+    image: ghcr.io/lovelaze/nebula-sync:latest
+    state: started
+    restart_policy: always
+    network: host
+    env:
+      PRIMARY: "http://127.0.0.1|<primary_password>"
+      REPLICAS: "https://<secondary_ip>|<secondary_password>"
+      CLIENT_SKIP_TLS_VERIFICATION: "true"
+      FULL_SYNC: "true"
+      RUN_GRAVITY: "true"
+      CRON: "0 * * * *"
+  when: ansible_facts['nodename'] == '<primary_hostname>'
 
 # ==============================================================================
 # Backup & Restore Automation Tasks
@@ -88,24 +116,26 @@
     job: "{{ ansible_facts['user_dir'] }}/scripts/test-restore.sh > /dev/null 2>&1"
 
 # ==============================================================================
-# Host Security & Automated Maintenance Tasks
+# 2. Host Security & Automated Maintenance Tasks (Debian / Ubuntu)
 # ==============================================================================
 
-- name: Install unattended-upgrades package
+- name: Install unattended-upgrades package (Debian/Ubuntu)
   ansible.builtin.apt:
     name:
       - unattended-upgrades
       - apt-listchanges
     state: present
+  when: ansible_facts['os_family'] == 'Debian'
   become: true
 
-- name: Configure automatic security upgrades
+- name: Configure automatic security upgrades (Debian/Ubuntu)
   ansible.builtin.copy:
     content: |
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
     dest: /etc/apt/apt.conf.d/20auto-upgrades
     mode: '0644'
+  when: ansible_facts['os_family'] == 'Debian'
   become: true
 
 - name: Schedule weekly apt cleanup cron job (Sunday 04:00 AM)
@@ -115,4 +145,34 @@
     hour: "4"
     weekday: "0"
     job: "apt update && apt upgrade -y && apt autoremove -y && apt clean"
+  when: ansible_facts['os_family'] == 'Debian'
+  become: true
+
+# ==============================================================================
+# 3. Host Security & Automated Maintenance Tasks (RedHat / RHEL)
+# ==============================================================================
+
+- name: Install dnf-automatic package (RHEL/Fedora)
+  ansible.builtin.dnf:
+    name: dnf-automatic
+    state: present
+  when: ansible_facts['os_family'] == 'RedHat'
+  become: true
+
+- name: Enable dnf-automatic timer (RHEL/Fedora)
+  ansible.builtin.systemd:
+    name: dnf-automatic.timer
+    state: started
+    enabled: true
+  when: ansible_facts['os_family'] == 'RedHat'
+  become: true
+
+- name: Schedule weekly dnf cleanup cron job (Sunday 04:00 AM)
+  ansible.builtin.cron:
+    name: "Weekly system upgrade and package cleanup"
+    minute: "0"
+    hour: "4"
+    weekday: "0"
+    job: "dnf upgrade -y && dnf autoremove -y && dnf clean all"
+  when: ansible_facts['os_family'] == 'RedHat'
   become: true
