@@ -2,7 +2,7 @@
 # File        : roles/logging_shipper/handlers/main.yml
 # Description : Handlers for vector logging shipper role
 # Author      : SudoShea
-# Version     : 1.6.0
+# Version     : 1.6.1
 # License     : MIT
 # ==============================================================================
 ---

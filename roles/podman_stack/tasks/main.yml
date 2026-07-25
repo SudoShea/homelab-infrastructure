@@ -3,7 +3,7 @@
 # Description : Provisions rootless container volumes, configs, Podman containers,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.6.0
+# Version     : 1.6.1
 # License     : MIT
 # ==============================================================================
 ---

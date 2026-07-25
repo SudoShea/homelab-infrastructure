@@ -2,7 +2,7 @@
 # Task        : roles/logging_server/tasks/main.yml
 # Description : Provisioning tasks for Grafana Loki and Grafana Dashboard with TLS
 # Author      : SudoShea
-# Version     : 1.6.0
+# Version     : 1.6.1
 # License     : MIT
 # ==============================================================================
 ---
@@ -87,13 +87,3 @@
       - "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs:/etc/grafana/certs:z"
       - "{{ ansible_facts['user_dir'] }}/homelab/grafana/provisioning:/etc/grafana/provisioning:z"
       - "{{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards:/var/lib/grafana/dashboards:z"
-
-- name: Generate self-signed TLS certificate for Grafana with Domain SAN
-  ansible.builtin.command: >
-    openssl req -x509 -nodes -days 3650 -newkey rsa:2048
-    -keyout {{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.key
-    -out {{ ansible_facts['user_dir'] }}/homelab/grafana/certs/grafana.crt
-    -subj "/CN=grafana.local/O=Homelab"
-    -addext "basicConstraints = critical, CA:TRUE"
-    -addext "keyUsage = critical, digitalSignature, cRLSign, keyCertSign"
-    -addext "subjectAltName = DNS:grafana.local, IP:192.168.0.102"
