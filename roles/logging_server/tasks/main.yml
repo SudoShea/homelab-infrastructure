@@ -2,7 +2,7 @@
 # Task        : roles/logging_server/tasks/main.yml
 # Description : Provisioning tasks for Grafana Loki and Grafana Dashboard with TLS
 # Author      : SudoShea
-# Version     : 1.7.0
+# Version     : 1.7.1
 # License     : MIT
 # ==============================================================================
 ---

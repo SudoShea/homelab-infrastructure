@@ -1,0 +1,12 @@
+# ==============================================================================
+# File        : roles/podman_stack/handlers/main.yml
+# Description : Systemd daemon reload handler for Podman Quadlet updates
+# Author      : SudoShea
+# Version     : 1.7.1
+# License     : MIT
+# ==============================================================================
+---
+- name: Reload user systemd daemon
+  ansible.builtin.systemd_service:
+    scope: user
+    daemon_reload: true

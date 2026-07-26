@@ -2,7 +2,7 @@
 # Playbook    : site.yml
 # Description : Master Ansible playbook for homelab infrastructure deployment
 # Author      : SudoShea
-# Version     : 1.7.0
+# Version     : 1.7.1
 # License     : MIT
 # ==============================================================================
 ---

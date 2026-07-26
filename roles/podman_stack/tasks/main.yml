@@ -3,7 +3,7 @@
 # Description : Provisions rootless container volumes, configs, Podman Quadlets,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.7.0
+# Version     : 1.7.1
 # License     : MIT
 # ==============================================================================
 ---
@@ -58,13 +58,10 @@
   loop:
     - unbound.container
     - pihole.container
-  register: quadlet_templates
+  notify: Reload user systemd daemon
 
-- name: Reload user systemd daemon if Quadlets updated
-  ansible.builtin.systemd_service:
-    scope: user
-    daemon_reload: true
-  when: quadlet_templates.changed
+- name: Flush handlers to ensure Quadlets are reloaded before starting service
+  ansible.builtin.meta: flush_handlers
 
 - name: Ensure Pi-hole service is running
   ansible.builtin.systemd_service:
@@ -168,7 +165,7 @@
   become: true
 
 - name: Enable dnf-automatic timer (RHEL/Fedora)
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     name: dnf-automatic.timer
     state: started
     enabled: true
