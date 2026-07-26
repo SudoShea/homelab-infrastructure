@@ -11,9 +11,11 @@ import os
 import re
 import sys
 import subprocess
+from datetime import datetime
 
 VERSION_FILE = "VERSION"
 EXCLUDED_DIRS = {".git", ".github", "__pycache__", "venv", ".venv"}
+EXCLUDED_FILES = {"CHANGELOG.md"}
 
 def get_current_version():
     """Reads the current version from the master VERSION file."""
@@ -45,18 +47,23 @@ def bump_version(current, bump_type):
         sys.exit(1)
 
 def find_version_files():
-    """Recursively walks the repository to find any file carrying a version header."""
+    """Recursively walks the repository to find code comments or Markdown metadata with version headers."""
     matching_files = []
-    header_pattern = re.compile(r"#\s*Version\s*[:\s]*[0-9]+\.[0-9]+\.[0-9]+")
+    code_pattern = re.compile(r"#\s*Version\s*[:\s]*[0-9]+\.[0-9]+\.[0-9]+")
+    md_pattern = re.compile(r"[\*\-]\s*\*\*Version:\*\*\s*[0-9]+\.[0-9]+\.[0-9]+")
 
     for root, dirs, files in os.walk("."):
         dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
 
         for file in files:
+            if file in EXCLUDED_FILES:
+                continue
+
             filepath = os.path.join(root, file)
             try:
                 with open(filepath, "r", encoding="utf-8") as f:
-                    if header_pattern.search(f.read()):
+                    content = f.read()
+                    if code_pattern.search(content) or md_pattern.search(content):
                         matching_files.append(filepath)
             except (UnicodeDecodeError, PermissionError):
                 continue
@@ -64,20 +71,28 @@ def find_version_files():
     return sorted(matching_files)
 
 def update_repository(new_version, target_files):
-    """Updates the master VERSION file and dynamically updates all discovered headers."""
+    """Updates the master VERSION file and dynamically updates all discovered headers and Markdown metadata."""
+    today_date = datetime.now().strftime("%Y-%m-%d")
+
     # 1. Update master VERSION file
     with open(VERSION_FILE, "w", encoding="utf-8") as f:
         f.write(new_version + "\n")
     print(f"Updated master source : {VERSION_FILE} -> v{new_version}")
 
-    # 2. Update headers using lambda to prevent regex group reference errors
-    pattern = re.compile(r"(#\s*Version\s*[:\s]*)[0-9]+\.[0-9]+\.[0-9]+")
+    # 2. Patterns for code comments and Markdown runbook metadata
+    code_pattern = re.compile(r"(#\s*Version\s*[:\s]*)[0-9]+\.[0-9]+\.[0-9]+")
+    md_ver_pattern = re.compile(r"([\*\-]\s*\*\*Version:\*\*\s*)[0-9]+\.[0-9]+\.[0-9]+")
+    md_date_pattern = re.compile(r"([\*\-]\s*\*\*Last Updated:\*\*\s*)[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
     for filepath in target_files:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
-        new_content = pattern.sub(lambda m: m.group(1) + new_version, content)
+        # Apply code header update
+        new_content = code_pattern.sub(lambda m: m.group(1) + new_version, content)
+        # Apply Markdown runbook metadata updates
+        new_content = md_ver_pattern.sub(lambda m: m.group(1) + new_version, new_content)
+        new_content = md_date_pattern.sub(lambda m: m.group(1) + today_date, new_content)
 
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(new_content)
