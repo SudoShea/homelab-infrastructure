@@ -2,6 +2,23 @@
 
 All notable changes to the `homelab-infrastructure` project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.7.0] - 2026-07-26
+
+### Added
+- **Podman Quadlet Architecture**: Migrated `roles/podman_stack` from legacy `podman_container` tasks to declarative Podman Quadlets (`pihole.container.j2`, `unbound.container.j2`), enabling native systemd user service lifecycle management with linger enabled.
+- **Deployment Wrapper Script**: Added `scripts/run.sh` to provide a unified CLI interface supporting dry-run checks (`check`), targeted host runs (`run <target>`), and full inventory deployments (`all`).
+- **Python Versioning & Header Tooling**: Introduced `scripts/bump_version.py` replacing `bump-version.sh` to automate semantic version bumps (`patch`, `minor`, `major`), git tag creation, and header metadata sync across all templates (`.j2`), scripts (`.sh`, `.py`), playbooks (`.yml`), and configuration files (`.ini`, `.toml`, `.json`).
+
+### Changed
+- **Ansible Fact & Header Standardization**: Refactored playbook and task files to use explicit `ansible_facts[...]` dictionary references to eliminate top-level variable deprecation warnings, and standardized all file headers (File, Description, Author, Version, License).
+- **Legacy Unit Cleanup**: Updated `roles/podman_stack/tasks/main.yml` to automatically detect and purge non-Quadlet user systemd units (`pihole.service`, `unbound.service`) to prevent service override conflicts.
+- **Documentation & Runbooks**: Updated `README.md` to document Quadlet architecture, systemd management commands (`systemctl --user`), the new script suite, and updated repository structure.
+
 ## [1.6.1] - 2026-07-26
 
 ### Fixed

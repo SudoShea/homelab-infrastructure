@@ -2,27 +2,27 @@
 
 ![Ansible Linting](https://github.com/SudoShea/homelab-infrastructure/actions/workflows/lint.yml/badge.svg)
 
-An Infrastructure-as-Code repository for provisioning a rootless container stack (Pi-hole v6, Unbound recursive DNS, and centralised Loki/Grafana logging with Vector) managed via Podman across Debian/RHEL systems, featuring automated 3-2-1 AES-256 encrypted backups, native TLS, and host maintenance.
+An Infrastructure-as-Code (IaC) repository for provisioning a rootless container stack (Pi-hole v6, Unbound recursive DNS, and centralised Loki/Grafana logging with Vector) managed natively via **Podman Quadlets** across Debian and RHEL systems. Features automated 3-2-1 AES-256 encrypted backups, native TLS, and automated host maintenance.
 
-**Note for Users**: Before deploying this stack, ensure you update `inventory.ini` and configuration templates with your environment's specific IP addresses, hostnames, and credentials.
+> **Note for Users**: Before deploying this stack, ensure you update `inventory.ini` and configuration templates with your environment's specific IP addresses, hostnames, and credentials.
 
 ---
 
 ## ⚡ Architecture
 
-* **Rootless Podman**: Serves container workloads without root privilege escalation.
-* **Pi-hole v6 (DNS Filter & Native HTTPS)**: Network-wide ad blocking, local DNS resolution, and embedded Civetweb TLS support.
-* **Unbound (Recursive DNS)**: Direct root-server DNS resolver with multi-architecture image detection (`aarch64`, `x86_64`).
-* **Centralised Observability Stack**: Centralised log aggregation via Vector (journald shipper), Loki (log indexing engine), and Grafana (TLS-encrypted dashboards).
-* **Multi-OS Host Support**: Automated maintenance for both Debian/Ubuntu (`unattended-upgrades`) and RHEL/Fedora (`dnf-automatic`).
-* **3-2-1 Encrypted Backup**: Nightly client-side AES-256 GPG snapshots, weekly restore verification, and automated offsite sync to cloud storage via `rclone`.
+* **Podman Quadlets**: Native systemd integration using declarative `.container` and `.network` definitions running under unprivileged user accounts with linger enabled.
+* **Pi-hole v6 (DNS Filter & Native HTTPS)**: Network-wide ad blocking, local DNS resolution, and embedded web server support.
+* **Unbound (Recursive DNS)**: Direct root-server DNS resolver with dynamic architecture detection (`aarch64` / `x86_64`) forwarding queries to root servers securely over port `5335`.
+* **Centralised Observability Stack**: Centralised log aggregation via Vector (journald shipper), Loki (indexing engine), and Grafana (TLS-encrypted dashboards).
+* **Multi-OS Host Support**: Automated security patching for both Debian/Ubuntu (`unattended-upgrades`) and RHEL/Fedora (`dnf-automatic`).
+* **3-2-1 Encrypted Backup**: Nightly client-side AES-256 encrypted snapshots, weekly restore verification tests, and automated offsite cloud sync via `rclone`.
 
 ---
 
 ## 🛠️ Repository Structure
 ```text
 homelab-infrastructure/
-├── .github/workflows/lint.yml            # Ansible-lint CI workflow
+├── .github/workflows/lint.yml         # Ansible-lint CI workflow
 ├── docs/
 │   ├── encrypted-backup-and-retention.md # Backup runbook & RPO/RTO metrics
 │   ├── logging-and-grafana-setup.md      # Centralised logging pipeline & Grafana HTTPS guide
@@ -31,15 +31,19 @@ homelab-infrastructure/
 ├── roles/
 │   ├── logging_server/                   # Loki log engine & Grafana dashboard provisioning
 │   ├── logging_shipper/                  # Vector log collection agent service
-│   └── podman_stack/                     # Core Pi-hole, Unbound, & backup automation tasks
+│   └── podman_stack/                     # Core Pi-hole, Unbound Quadlets, & backup automation
 ├── scripts/
 │   ├── backup.sh                         # Nightly AES-256 container snapshot script
-│   ├── bump-version.sh                   # Automated version and date header update tool
+│   ├── bump_version.py                   # Version bump & automated file header sync script
+│   ├── run.sh                            # Deployment wrapper script (check/run modes)
 │   └── test-restore.sh                   # Weekly dry-run restore verification test
-├── inventory.ini                         # Deployment inventory target
 ├── CHANGELOG.md                          # Version release history
+├── inventory.ini                         # Production deployment target template
+├── inventory.local.ini                   # Local testing inventory target (git-ignored)
+├── LICENSE                               # MIT License
 ├── README.md                             # Project documentation
-└── site.yml                              # Playbook entrypoint
+├── site.yml                              # Master playbook entrypoint
+└── VERSION                               # Current release version tag
 ```
 ---
 
@@ -56,31 +60,48 @@ homelab-infrastructure/
 
 ## 🚀 Quick Start
 
-### 1. Clone Repository & Install Prerequisites
-Ensure Ansible and the `containers.podman` collection are installed on your control node:
+### 1. Prerequisites
+Ensure Ansible and the required collections are installed on your control node:
 ```bash
 git clone https://github.com/SudoShea/homelab-infrastructure.git
 cd homelab-infrastructure
 
 ansible-galaxy collection install containers.podman
 ```
-### 2. Configure Inventory Target
-Before running the deployment, ensure your environment-specific details are set:
+### 2. Configure Inventory & Variables
+Set your environment specifics:
 * `inventory.ini`: Update with your target host IPs, SSH users, and host aliases.
 * `roles/podman_stack/tasks/main.yml`: Update container environment variables such as `TZ` (timezone), `FTLCONF_webserver_domain`, and (if using Nebula Sync) primary/replica cluster credentials.
-* `site.yml`: Verify your storage server targets and cloud backup remote paths.
+* `site.yml`: Verify play-to-play mappings, storage server targets, and cloud back remote paths.
 
 ### 3. Run Dry-Run Check (Safe Mode)
-Verify tasks and template rendering against your target system without applying changes:
+Run a full check against all inventory targets using the deployment wrapper script:
 ```bash
-ansible-playbook -i inventory.ini site.yml --check --diff -K
+./scripts/run.sh check
 ```
 ### 4. Deploy Stack
-Execute the playbook to provision persistent volumes, templates, rootless containers, backup cron jobs, and host security tasks:
+Deploy to a specific host target or across the entire inventory:
 ```bash
-ansible-playbook -i inventory.ini site.yml -K
-```
+# Deploy to primary node only
+./scripts/run.sh run pihole-primary
 
+# Deploy across all inventory nodes
+./scripts/run.sh all
+```
+---
+
+## ⚙️ Quadlet Container Management
+Once deployed, container lifecycles are managed natively by `systemd` user services on each node:
+```bash
+# Check status of the Quadlet stack
+systemctl --user status pihole.service unbound.service
+
+# Restart the DNS stack
+systemctl --user restart pihole.service
+
+# View live container logs
+journalctl --user -u pihole.service -f
+```
 ---
 
 ## 📄 License

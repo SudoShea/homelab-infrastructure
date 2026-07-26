@@ -1,0 +1,28 @@
+# ==============================================================================
+# File        : roles/podman_stack/templates/pihole.container.j2
+# Description : Podman Quadlet unit definition for Pi-hole DNS sinkhole server
+# Author      : SudoShea
+# Version     : 1.7.0
+# License     : MIT
+# ==============================================================================
+
+[Unit]
+Description=Pi-hole DNS Sinkhole
+After=unbound.service
+Wants=unbound.service
+
+[Container]
+Image=docker.io/pihole/pihole:latest
+ContainerName=pihole
+Network=host
+Environment=TZ=<timezone>
+Environment=FTLCONF_LOCAL_IPV4={{ ansible_facts['default_ipv4']['address'] }}
+Environment=FTLCONF_dns_upstreams=127.0.0.1#5335
+Environment=PIHOLE_DNS_=127.0.0.1#5335
+Environment=FTLCONF_webserver_port=80,443s
+Environment=FTLCONF_webserver_domain=<secondary_domain>
+Volume={{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole:/etc/pihole:z
+Volume={{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d:z
+
+[Install]
+WantedBy=default.target

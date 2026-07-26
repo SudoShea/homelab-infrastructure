@@ -2,7 +2,7 @@
 # Task        : roles/logging_shipper/tasks/main.yml
 # Description : Provisioning tasks for Vector log collector container
 # Author      : SudoShea
-# Version     : 1.6.1
+# Version     : 1.7.0
 # License     : MIT
 # ==============================================================================
 ---

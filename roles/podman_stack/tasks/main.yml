@@ -1,9 +1,9 @@
 # ==============================================================================
 # Role Task   : roles/podman_stack/tasks/main.yml
-# Description : Provisions rootless container volumes, configs, Podman containers,
+# Description : Provisions rootless container volumes, configs, Podman Quadlets,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.6.1
+# Version     : 1.7.0
 # License     : MIT
 # ==============================================================================
 ---
@@ -19,6 +19,12 @@
   ansible.builtin.set_fact:
     podman_stack_unbound_image: "{{ 'mvance/unbound-rpi' if ansible_facts['architecture'] in ['aarch64', 'armv7l'] else 'mvance/unbound' }}"
 
+- name: Ensure systemd Quadlet directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.config/containers/systemd"
+    state: directory
+    mode: '0755'
+
 - name: Create persistent volume directories for rootless stack
   ansible.builtin.file:
     path: "{{ item }}"
@@ -30,39 +36,41 @@
     - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config"
     - "{{ ansible_facts['user_dir'] }}/scripts"
 
+- name: Remove legacy non-Quadlet user systemd unit files if present
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.config/systemd/user/{{ item }}"
+    state: absent
+  loop:
+    - pihole.service
+    - unbound.service
+
 - name: Deploy Unbound configuration template
   ansible.builtin.template:
     src: unbound.conf.j2
     dest: "{{ ansible_facts['user_dir'] }}/homelab/unbound/config/unbound.conf"
     mode: '0644'
 
-- name: Deploy Unbound recursive DNS container
-  containers.podman.podman_container:
-    name: unbound
-    image: "docker.io/{{ podman_stack_unbound_image }}:latest"
-    state: started
-    restart_policy: always
-    network: host
-    volumes:
-      - "{{ ansible_facts['user_dir'] }}/homelab/unbound/config:/opt/unbound/etc/unbound:z"
+- name: Deploy Quadlet unit definitions
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ ansible_facts['user_dir'] }}/.config/containers/systemd/{{ item }}"
+    mode: '0644'
+  loop:
+    - unbound.container
+    - pihole.container
+  register: quadlet_templates
 
-- name: Deploy Pi-hole DNS container
-  containers.podman.podman_container:
-    name: pihole
-    image: docker.io/pihole/pihole:latest
+- name: Reload user systemd daemon if Quadlets updated
+  ansible.builtin.systemd_service:
+    scope: user
+    daemon_reload: true
+  when: quadlet_templates.changed
+
+- name: Ensure Pi-hole service is running
+  ansible.builtin.systemd_service:
+    name: pihole.service
+    scope: user
     state: started
-    restart_policy: always
-    network: host
-    env:
-      TZ: "<timezone>"
-      FTLCONF_LOCAL_IPV4: "{{ ansible_facts['default_ipv4']['address'] }}"
-      FTLCONF_dns_upstreams: "127.0.0.1#5335"
-      PIHOLE_DNS_: "127.0.0.1#5335"
-      FTLCONF_webserver_port: "80,443s"
-      FTLCONF_webserver_domain: "<secondary_domain>"
-    volumes:
-      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole:/etc/pihole:z"
-      - "{{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d:z"
 
 # ==============================================================================
 # Pi-hole v6 Auto-Replication (Nebula Sync)

@@ -1,0 +1,19 @@
+# ==============================================================================
+# File        : roles/podman_stack/templates/unbound.container.j2
+# Description : Podman Quadlet unit definition for Unbound recursive DNS server
+# Author      : SudoShea
+# Version     : 1.7.0
+# License     : MIT
+# ==============================================================================
+
+[Unit]
+Description=Unbound Recursive DNS Server
+
+[Container]
+Image=docker.io/{{ podman_stack_unbound_image }}:latest
+ContainerName=unbound
+Network=host
+Volume={{ ansible_facts['user_dir'] }}/homelab/unbound/config:/opt/unbound/etc/unbound:z
+
+[Install]
+WantedBy=default.target

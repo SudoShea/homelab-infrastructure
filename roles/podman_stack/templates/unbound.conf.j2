@@ -1,10 +1,11 @@
 # ==============================================================================
-# Template    : roles/podman_stack/templates/unbound.conf.j2
-# Description : Unbound recursive DNS server configuration
+# File        : roles/podman_stack/templates/unbound.conf.j2
+# Description : Unbound recursive DNS resolver configuration for Pi-hole
 # Author      : SudoShea
-# Version     : 1.6.1
+# Version     : 1.7.0
 # License     : MIT
 # ==============================================================================
+
 server:
     verbosity: 1
     interface: 0.0.0.0
@@ -12,19 +13,21 @@ server:
     do-ip4: yes
     do-udp: yes
     do-tcp: yes
+    do-ip6: no
+    prefer-ip6: no
 
-    # Access control
-    access-control: 127.0.0.0/8 allow
-    access-control: 10.0.0.0/8 allow
-    access-control: 172.16.0.0/12 allow
-    access-control: 192.168.0.0/16 allow
-
-    # Privacy and security
-    hide-identity: yes
-    hide-version: yes
+    # Trust anchor & security settings
     harden-glue: yes
     harden-dnssec-stripped: yes
     use-caps-for-id: no
     edns-buffer-size: 1232
     prefetch: yes
     num-threads: 1
+
+    # Private network range protection
+    private-address: 192.168.0.0/16
+    private-address: 169.254.0.0/16
+    private-address: 172.16.0.0/12
+    private-address: 10.0.0.0/8
+    private-address: fd00::/8
+    private-address: fe80::/10
