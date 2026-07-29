@@ -3,7 +3,7 @@
 # Description : Provisions rootless container volumes, configs, Podman Quadlets,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.8.1
+# Version     : 1.8.2
 # License     : MIT
 # ==============================================================================
 ---

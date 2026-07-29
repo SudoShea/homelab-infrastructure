@@ -2,8 +2,8 @@
 # Git Ignore    : .gitignore
 # Description   : Exclusion patterns for sensitive credentials, keys, and caches
 # Author        : SudoShea
-# Version       : 1.8.1
-# License       : MIT
+# Version       : 1.8.2
+# Licence       : MIT
 # ==============================================================================
 
 # --- Secrets, Vault Passwords & Keys ---
@@ -15,6 +15,11 @@ vault_pass.txt
 *.pem
 *.pfx
 *.p12
+
+# --- Sensitive Group & Host Variables ---
+group_vars/**/vault.yml
+host_vars/**/vault.yml
+!*.example
 
 # --- Local Environment & Inventory Overrides ---
 inventory.local.ini

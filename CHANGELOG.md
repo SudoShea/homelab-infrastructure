@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.2] - 2026-07-29
+
+### Added
+* **Vault Template:** Created `group_vars/all/vault.yml.example` to provide a clean, unencrypted reference template for Restic passphrases, Rclone OAuth tokens, and Grafana credentials.
+
+### Changed
+* **Parameterised Backup Target Variables:** Updated `group_vars/homelab_nodes/backup.yml` to replace hardcoded IP addresses and SSH usernames with dynamic inventory variables (`secondary_storage_host` and `secondary_storage_user`).
+* **Inventory Structure Standardisation:** Harmonised host group hierarchies across `inventory.ini` and `inventory.local.ini` using `[primary_servers]`, `[secondary_servers]`, and `[homelab_nodes]`.
+* **Repository Onboarding Guide:** Updated `README.md` Quick Start steps to document copying `inventory.local.ini` and initialising encrypted Ansible Vault files from `vault.yml.example`.
+
+### Fixed
+* **CI Runner Node Runtime Policy:** Added `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` environment flag and updated `actions/checkout` to `@v6` in `.github/workflows/lint.yml` to eliminate GitHub runner Node 20 deprecation warnings.
+
+### Security
+* **Vault Exclusion Rules:** Enhanced `.gitignore` with rules (`group_vars/**/vault.yml`, `host_vars/**/vault.yml`) to ensure local encrypted vault files are excluded from Git history while allowing `.example` templates.
+
+---
+
 ## [1.8.1] - 2026-07-29
 
 ### Changed
@@ -27,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Pi-hole v6 HTTPS:** Native TLS support for Pi-hole v6 web interface with automated certificate management.
 * **Rootless Quadlets:** Converted core DNS services (Pi-hole and Unbound) to native Podman Quadlet systemd container definitions.
 
+---
+
 ## [1.7.0] - 2026-07-26
 
 ### Added
@@ -39,12 +59,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Legacy Unit Cleanup**: Updated `roles/podman_stack/tasks/main.yml` to automatically detect and purge non-Quadlet user systemd units (`pihole.service`, `unbound.service`) to prevent service override conflicts.
 - **Documentation & Runbooks**: Updated `README.md` to document Quadlet architecture, systemd management commands (`systemctl --user`), the new script suite, and updated repository structure.
 
+---
+
 ## [1.6.1] - 2026-07-26
 
 ### Fixed
 - Fixed Ansible linter module resolution by replacing `ansible.builtin.ini_file` with `community.general.ini_file` in `roles/logging_shipper`.
 - Removed obsolete self-signed TLS generation task from `roles/logging_server` to enforce local Root CA deployment and ensure task idempotency.
 - Corrected extra blank line formatting in `roles/logging_server/tasks/main.yml`.
+
+---
 
 ## [1.6.0] - 2026-07-26
 
@@ -54,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `roles/logging_server` and `roles/logging_shipper` Ansible roles for automated stack deployment.
 - Added automated repository versioning script (`scripts/bump-version.sh`) supporting tracked and untracked templates (`.j2`, `.toml`, `.conf`, `.ini`, `.json`).
 - Published comprehensive documentation guide at `docs/logging-and-grafana-setup.md`.
+
+---
 
 ## [1.5.0] - 2026-07-25
 
@@ -67,10 +93,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **SELinux Compatibility**: Added `:z` volume flags to Podman volume mounts for RHEL/CentOS/Fedora compatibility.
 * **Documentation Standards**: Updated all runbooks (`topology-and-disaster-recovery.md`, `encrypted-backup-and-retention.md`, `pihole-v6-tls-setup.md`, `README.md`) with explicit user instructions on configuration placeholders, command flags (`-K`), and setup prerequisites.
 
+---
+
 ## [1.4.0] - 2026-07-25
 
 ### Added
 * Authored `docs/pihole-v6-tls-setup.md` runbook defining Native Pi-hole v6 HTTPS setup, local Root CA generation, & automated cert renewals.
+
+---
 
 ## [1.3.0] - 2026-07-24
 
@@ -84,6 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * **Network Topology & Documentation:** Updated `docs/topology-and-disaster-recovery.md` and `README.md` to remove Caddy from the architecture and reflect native Pi-hole v6 TLS container port bindings (`443/tcp`).
 
+---
+
 ## [1.2.0] - 2026-07-24
 ### Added
 - Created `scripts/backup.sh` to generate client-side AES-256 encrypted snapshots using `podman unshare`.
@@ -91,14 +123,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Authored `docs/encrypted-backup-and-retention.md` runbook defining 3-2-1 backup architecture, RPO/RTO metrics, and verification standards.
 - Configured automated host security updates via `unattended-upgrades` on Pi host.
 
+---
+
 ## [1.1.0] - 2026-07-24
 ### Added
 - Created `docs/topology-and-disaster-recovery.md` covering edge-to-core network topology, Podman container isolation boundaries, cold-boot restore steps, and RTO/RPO objectives.
+
+---
 
 ## [1.0.1] - 2026-07-24
 ### Added
 - Jinja2 configuration templates for Unbound recursive DNS (`unbound.conf.j2`) and Caddy reverse proxy (`Caddyfile.j2`).
 - Sample `inventory.ini` for local and remote deployment targets.
+
+---
 
 ## [1.0.0] - 2026-07-24
 ### Added

@@ -71,10 +71,19 @@ cd homelab-infrastructure
 ansible-galaxy install -r requirements.yml
 ```
 ### 2. Configure Inventory & Variables
-Set your environment specifics:
-* `inventory.ini`: Update with your target host IPs, SSH users, and host aliases.
-* `group_vars/all/vault.yml`: Configure encrypted secrets for Restic passwords, Rclone tokens, and Grafana credentials.
-* `site.yml`: Verify play-to-play mappings, storage server targets, and backup path definitions.
+Set up your target environment and encrypted secrets:
+* **Inventory Configuration:** Copy `inventory.ini` or create `inventory.local.ini` with your target host IPs and SSH usernames:
+```bash
+cp inventory.ini inventory.local.ini
+```
+* **Vault Secrets Setup:** Initialise your encrypted secrets file from the template:
+```bash
+cp group_vars/all/vault.yml.example group_vars/all/vault.yml
+nano group_vars/all/vault.yml
+ansible-vault encrypt group_vars/all/vault.yml
+```
+*Populate `vault.yml` with your Restic passphrase, Rclone tokens, and Grafana credentials.*
+* **Playbook Mappings:** Verify play-to-play mappings, target storage hosts, and backup path definitions in `site.yml`.
 
 ### 3. Run Dry-Run Check (Safe Mode)
 Run a full check against all inventory targets using the deployment wrapper script:

@@ -1,0 +1,17 @@
+# ==============================================================================
+# File        : group_vars/all/vault.yml.example
+# Description : Example Ansible Vault secrets template (Copy to vault.yml)
+# Author      : SudoShea
+# Version     : 1.8.2
+# Licence     : MIT
+# ==============================================================================
+---
+# --- Restic Backup Engine Secrets ---
+vault_restic_password: "CHANGEME_STRONG_RESTIC_PASSPHRASE"
+
+# --- Rclone Offsite Cloud Sync Secrets ---
+# OAuth JSON token string generated via `rclone authorize "drive"`
+vault_gdrive_token: '{"access_token":"CHANGEME","token_type":"Bearer","refresh_token":"CHANGEME","expiry":"2026-01-01T00:00:00Z"}'
+
+# --- Centralised Observability Stack ---
+vault_grafana_admin_password: "CHANGEME_GRAFANA_ADMIN_PASSWORD"

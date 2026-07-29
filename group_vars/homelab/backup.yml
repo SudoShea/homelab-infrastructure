@@ -1,6 +1,6 @@
 # ==============================================================================
 # File        : group_vars/homelab_nodes/backup.yml
-# Description : Multi-remote backup config for RHEL server + Personal Google Drive
+# Description : Multi-remote backup config for secondary server + Google Drive
 # Author      : SudoShea
 # ==============================================================================
 ---
@@ -14,13 +14,13 @@ restic_rclone_sync_enabled: true
 restic_rclone_config_path: "/etc/rclone/rclone.conf"
 
 restic_rclone_remotes:
-  # Destination 1: On-Prem RHEL Secondary Storage (SFTP)
-  - name: "rhel-backup-server"
+  # Destination 1: On-Prem Secondary Storage (SFTP)
+  - name: "secondary-backup-server"
     type: "sftp"
     target: "/var/backups/restic-secondary"
     options:
-      host: "192.168.0.102"
-      user: "sclark"
+      host: "{{ secondary_storage_host | default('127.0.0.1') }}"
+      user: "{{ secondary_storage_user | default('ansible') }}"
       port: "22"
       key_file: "/root/.ssh/id_ed25519"
 
