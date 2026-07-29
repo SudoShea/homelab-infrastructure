@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.1] - 2026-07-29
+
+### Changed
+* **Backup Engine Integration:** Migrated persistent container volume backup architecture to use Restic and Rclone managed via the `linux_backup_automation` Ansible role.
+* **Encrypted Backup Runbook:** Updated `docs/encrypted-backup-and-retention.md` to detail Restic client-side AES-256 encryption, systemd daily timer schedules, retention pruning policy (7 daily, 4 weekly, 12 monthly, 1 yearly), and interactive `restic-restore.sh` recovery workflows.
+* **Topology & Disaster Recovery:** Updated `docs/topology-and-disaster-recovery.md` with current container storage volume paths (`/var/lib/containers/storage/volumes/`), health diagnostic checks, and cold-boot restoration steps using Restic.
+* **Repository README:** Updated `README.md` with standardised repository badges (Ansible Lint, Version tag, Ansible Core compatibility, and MIT License), updated directory layout, and `requirements.yml` setup procedures.
+
+### Removed
+* **Legacy Reverse Proxy References:** Completely purged obsolete references to Caddy across topology, disaster recovery, and backup runbooks to reflect direct Pi-hole v6 management.
+
+---
+
+## [1.8.0] - 2026-07-26
+
+### Added
+* **Centralized Observability:** Integrated Vector journald log shipping to Loki indexing engine and Grafana dashboard visualisation.
+* **Pi-hole v6 HTTPS:** Native TLS support for Pi-hole v6 web interface with automated certificate management.
+* **Rootless Quadlets:** Converted core DNS services (Pi-hole and Unbound) to native Podman Quadlet systemd container definitions.
+
 ## [1.7.0] - 2026-07-26
 
 ### Added

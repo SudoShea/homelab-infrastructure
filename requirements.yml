@@ -1,0 +1,16 @@
+# ==============================================================================
+# Requirements : requirements.yml
+# Description  : External role and collection dependencies for homelab stack
+# Author       : SudoShea
+# Version      : 1.8.1
+# License      : MIT
+# ==============================================================================
+---
+roles:
+  - name: linux_backup_automation
+    src: git+https://github.com/SudoShea/linux-backup-automation.git
+    version: main
+
+collections:
+  - name: containers.podman
+  - name: community.general

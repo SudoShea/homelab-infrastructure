@@ -1,25 +1,23 @@
 # ==============================================================================
-# File        : .gitignore
-# Description : Git ignore rules for homelab-infrastructure
-# Author      : SudoShea
-# Version     : 1.7.1
-# License     : MIT
+# Git Ignore    : .gitignore
+# Description   : Exclusion patterns for sensitive credentials, keys, and caches
+# Author        : SudoShea
+# Version       : 1.8.1
+# License       : MIT
 # ==============================================================================
 
-# --- Local Inventories & Overrides ---
-*.local.ini
-*.local.yml
-inventory.local*
-host_vars/*.local.yml
-group_vars/*.local.yml
-
-# --- Secrets, Vaults, and Private Keys ---
+# --- Secrets, Vault Passwords & Keys ---
 .vault_pass
+.vault-password
+vault_pass.txt
 *.vault
 *.key
 *.pem
 *.pfx
 *.p12
+
+# --- Local Environment & Inventory Overrides ---
+inventory.local.ini
 
 # --- Backup Artifacts & Snapshots ---
 *.tar

@@ -2,34 +2,22 @@
 # Playbook    : site.yml
 # Description : Master Ansible playbook for homelab infrastructure deployment
 # Author      : SudoShea
-# Version     : 1.7.1
+# Version     : 1.8.1
 # License     : MIT
 # ==============================================================================
 ---
-- name: Deploy Rootless Podman Homelab Stack & Local Backup Automation
+- name: Deploy Rootless Podman Homelab Stack
   hosts: homelab
   gather_facts: true
   roles:
     - podman_stack
 
-- name: Configure Secondary Server Offsite Sync & Storage Pipeline
-  hosts: storage_servers
+- name: Deploy Encrypted Backup Engine (Primary Source Host Only)
+  hosts: primary_servers
   gather_facts: true
-  tasks:
-    - name: Ensure server backup destination directory exists
-      ansible.builtin.file:
-        path: "{{ ansible_facts['user_dir'] }}/backups/pihole"
-        state: directory
-        mode: '0755'
-
-    - name: Schedule nightly offsite sync to cloud storage (03:00 AM)
-      ansible.builtin.cron:
-        name: "Pull Pi-hole backup and sync offsite to cloud storage"
-        minute: "0"
-        hour: "3"
-        job: >-
-          rsync -az <username>@<primary_hostname>:~/backups/ {{ ansible_facts['user_dir'] }}/backups/pihole/ &&
-          rclone sync {{ ansible_facts['user_dir'] }}/backups/pihole/ <cloud_remote>:<cloud_backup_path>
+  roles:
+    - role: linux_backup_automation
+      become: true
 
 - name: Deploy Centralized Logging Server (Loki & Grafana)
   hosts: storage_servers

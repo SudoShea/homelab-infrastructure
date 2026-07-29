@@ -3,7 +3,7 @@
 # Description : Provisions rootless container volumes, configs, Podman Quadlets,
 #               backup/restore scripts, cron schedules, and unattended updates.
 # Author      : SudoShea
-# Version     : 1.7.1
+# Version     : 1.8.1
 # License     : MIT
 # ==============================================================================
 ---
@@ -88,37 +88,6 @@
       RUN_GRAVITY: "true"
       CRON: "0 * * * *"
   when: ansible_facts['nodename'] == '<primary_hostname>'
-
-# ==============================================================================
-# Backup & Restore Automation Tasks
-# ==============================================================================
-
-- name: Deploy automated backup script
-  ansible.builtin.copy:
-    src: scripts/backup.sh
-    dest: "{{ ansible_facts['user_dir'] }}/scripts/backup.sh"
-    mode: '0755'
-
-- name: Deploy restore verification test script
-  ansible.builtin.copy:
-    src: scripts/test-restore.sh
-    dest: "{{ ansible_facts['user_dir'] }}/scripts/test-restore.sh"
-    mode: '0755'
-
-- name: Schedule daily AES-256 encrypted backup cron job (02:00 AM)
-  ansible.builtin.cron:
-    name: "Nightly homelab stack backup"
-    minute: "0"
-    hour: "2"
-    job: "{{ ansible_facts['user_dir'] }}/scripts/backup.sh > /dev/null 2>&1"
-
-- name: Schedule weekly restore verification test cron job (Sunday 02:30 AM)
-  ansible.builtin.cron:
-    name: "Weekly backup restore verification test"
-    minute: "30"
-    hour: "2"
-    weekday: "0"
-    job: "{{ ansible_facts['user_dir'] }}/scripts/test-restore.sh > /dev/null 2>&1"
 
 # ==============================================================================
 # 2. Host Security & Automated Maintenance Tasks (Debian / Ubuntu)

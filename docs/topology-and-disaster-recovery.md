@@ -4,8 +4,8 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.7.1
-* **Last Updated:** 2026-07-26
+* **Version:** 1.8.1
+* **Last Updated:** 2026-07-29
 
 ---
 
@@ -17,37 +17,35 @@ The homelab environment operates on a segmented local network. External web traf
 ```text
 [ Local Clients ]
         │
-        ├─── HTTPS / HTTP Requests (Port 443 / 80) ────► [ Pi-hole Native Web & TLS (v6) ]
-        │                                                        │
-        │                                                        │ (Internal Forward: 127.0.0.1#5335)
-        │                                                        ▼
+        ├─── Web Admin Requests (Port 80 / 443) ────────► [ Pi-hole Native Web UI (v6) ]
+        │
         └─── DNS Queries (Port 53) ──────────────────────► [ Pi-hole DNS Filter ]
-                                                                 │
-                                                                 ▼
-                                                        [ Unbound Recursive DNS ]
-                                                                 │
-                                                                 ▼
-                                                        (Direct Root Server Queries)
+                                                               │
+                                                               │ (Internal Forward: 127.0.0.1#5335)
+                                                               ▼
+                                                    [ Unbound Recursive DNS ]
+                                                               │
+                                                               ▼
+                                                   (Direct Root Server Queries)
 ```
 ---
 
 ## 🔒 2. Container Isolation Boundaries
 All service containers run rootless under Podman, managed by the non-privileged system user (ansible_facts['user_id']).
 
-| Service | Container Name | Host Network Port | Sub-System Function | Mount Point / Persistence |
+| Service | Container Name | Host Network Port | Sub-System Function | Mount Point / Storage Volume |
 | :--- | :--- | :--- | :--- | :--- |
-| **Pi-hole** | `pihole` | `53/udp`, `53/tcp`, `80/tcp` | DNS Filtering & Ad-blocking | `~/homelab/pihole/etc-pihole`<br>`~/homelab/pihole/etc-dnsmasq.d` |
-| **Unbound** | `unbound` | `5335/udp` (Loopback) | Recursive Root DNS Resolver | `~/homelab/unbound/config` |
+| **Pi-hole** | `pihole` | `53/udp`, `53/tcp`, `80/tcp`, `444/tcp` | DNS Filtering & Ad-blocking | `/var/lib/containers/storage/volumes/etc-pihole`<br>`/var/lib/containers/storage/volumes/etc-dnsmasq.d` |
+| **Unbound** | `unbound` | `5335/udp` (Loopback) | Recursive Root DNS Resolver | `/var/lib/containers/storage/volumes/unbound-config` |
 
 ---
 
 ## 🚨 3. Disaster Recovery Protocol
-Service Level Objectives
+### Service Level Objectives
+* **Recovery Time Objective (RTO):** `< 15 minutes` to restore DNS filtering and web admin access after complete node or storage failure.
+* **Recovery Point Objective (RPO):** `< 24 hours` (Nightly automated Restic snapshots).
 
-* **Recovery Time Objective (RTO):** `< 15 minutes` to restore DNS and core internal web routing after complete node or storage failure.
-* **Recovery Point Objective (RPO):** `< 24 hours` (Nightly automated AES-256 snapshots).
-
-**Step-by-Step Cold-Boot Recovery Procedure**
+### Step-by-Step Cold-Boot Recovery Procedure
 In the event of a catastrophic host crash, OS reinstall, or drive replacement, follow these steps to restore the full stack:
 
 ### Step 1: System Onboarding & Ansible Setup
@@ -57,33 +55,36 @@ Ensure the target host is reachable via SSH, Python 3 is installed, and user lin
 git clone https://github.com/SudoShea/homelab-infrastructure.git
 cd homelab-infrastructure
 
-# Install required Podman collection
-ansible-galaxy collection install containers.podman
+# Install required Ansible Galaxy collections and external roles
+ansible-galaxy install -r requirements.yml
 ```
-### Step 2: Restore Persistent Volume Data
-Fetch the latest encrypted backup archive from your local mirror (`<primary_storage_node>`) or offsite cloud (`<cloud_storage_provider>`), verify checksums, and extract using `podman unshare` (see [`docs/encrypted-backup-and-retention.md`](docs/encrypted-backup-and-retention.md)):
+### Step 2: Restore Persistent Volume Data via Restic
+Locate your Restic repository (local secondary SFTP host `<secondary_storage_node>` or cloud remote `<cloud_storage_provider>`) and restore persistent container volume states:
 ```bash
-# 1. Verify SHA-256 Checksum Integrity
-sha256sum -c homelab_backup_latest.tar.gz.gpg.sha256
+# 1. Option A: Use interactive CLI restore tool if previously installed
+sudo restic-restore.sh
 
-# 2. Decrypt & Extract using Podman sub-UID mapping
-gpg --batch --decrypt --passphrase-file ~/.backup_passphrase \
-    homelab_backup_latest.tar.gz.gpg | podman unshare tar -xzf - -C ~/
+# 2. Option B: Manual Restic restore execution
+sudo restic -r /var/backups/restic \
+  --password-file /etc/restic/password \
+  restore latest \
+  --target / \
+  --include /var/lib/containers/storage/volumes
 ```
 ### Step 3: Execute Playbook Dry-Run
-Verify path bindings, template resolution, and user permissions before starting containers:
+Verify path bindings, template resolution, and user permissions before launching container services:
 ```bash
-ansible-playbook -i inventory.ini site.yml --check --diff -K
+ansible-playbook -i inventory.ini site.yml --check --diff --vault-password-file .vault_pass
 ```
 ### Step 4: Full Active Deployment
-Deploy volumes, Jinja2 configuration templates, and launch rootless containers and re-establish cron backup schedules:
+Deploy host configuration templates, spin up Podman Compose container stacks, and re-establish systemd backup timers (`linux_backup_automation`):
 ```bash
-ansible-playbook -i inventory.ini site.yml -K
+ansible-playbook -i inventory.ini site.yml --vault-password-file .vault_pass
 ```
 ---
 
 ## 🛠️ 4. Verification & Health Checks
-Verify operational status and container health using the following diagnostic commands:
+Verify operational status and container stack health using the following diagnostic commands:
 
 ```bash
 # 1. Check Podman container status and active port mappings
@@ -95,8 +96,11 @@ dig @127.0.0.1 -p 53 pi-hole.net
 # 3. Test Unbound recursive resolver directly inside container
 podman exec -it unbound drill @127.0.0.1 root-servers.net
 
-# 4. Check Pi-hole Web Interface (Host Port 8080)
-curl -I http://127.0.0.1:8080/admin/
+# 4. Check Pi-hole Web Interface
+curl -I [http://127.0.0.1/admin/](http://127.0.0.1/admin/)
+
+# 5. Check Systemd Backup Timer status
+systemctl status restic-backup.timer
 ```
 ---
 
