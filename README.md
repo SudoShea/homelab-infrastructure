@@ -28,9 +28,14 @@ homelab-infrastructure/
 ├── .github/workflows/lint.yml         # Ansible-lint CI workflow
 ├── docs/
 │   ├── encrypted-backup-and-retention.md # Restic backup runbook & RPO/RTO metrics
-│   ├── logging-and-grafana-setup.md      # Centralized logging pipeline & Grafana HTTPS guide
+│   ├── logging-and-grafana-setup.md      # Centralised logging pipeline & Grafana HTTPS guide
 │   ├── pihole-v6-tls-setup.md            # Native Pi-hole v6 HTTPS setup & local Root CA guide
 │   └── topology-and-disaster-recovery.md # Network topology & disaster recovery runbook
+├── group_vars/
+│   ├── all/
+│   │   └── vault.yml.example             # Secrets reference template (Restic, Rclone, Grafana)
+│   └── homelab_nodes/
+│       └── backup.yml                    # Multi-remote Restic & Rclone backup configuration
 ├── roles/
 │   ├── logging_server/                   # Loki log engine & Grafana dashboard provisioning
 │   ├── logging_shipper/                  # Vector log collection agent service
@@ -41,7 +46,7 @@ homelab-infrastructure/
 ├── CHANGELOG.md                          # Version release history
 ├── inventory.ini                         # Production deployment target template
 ├── inventory.local.ini                   # Local testing inventory target (git-ignored)
-├── LICENSE                               # MIT License
+├── LICENSE                               # MIT Licence
 ├── README.md                             # Project documentation
 ├── requirements.yml                      # External Ansible Galaxy role dependencies
 ├── site.yml                              # Master playbook entrypoint
