@@ -2,7 +2,7 @@
 # File        : roles/podman_stack/handlers/main.yml
 # Description : Systemd daemon reload handler for Podman Quadlet updates
 # Author      : SudoShea
-# Version     : 1.8.4
+# Version     : 1.8.5
 # License     : MIT
 # ==============================================================================
 ---

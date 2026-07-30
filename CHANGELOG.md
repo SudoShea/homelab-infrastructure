@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.5] - 2026-07-30
+
+### Fixed
+* **CI Vault Passphrase Initialisation:** Updated `.github/workflows/lint.yml` to write a non-empty dummy passphrase (`echo "dummy_ci_vault_password" > .vault_pass`) instead of creating a 0-byte file via `touch`. This resolves Ansible syntax check failures inside `ansible-lint` caused by empty vault password file parsing.
+
+---
+
 ## [1.8.4] - 2026-07-30
 
 ### Fixed
@@ -19,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * **Backup Automation Upgrade:** Pinned `linux_backup_automation` role dependency to `v1.1.0` in `requirements.yml` to integrate the automated weekly Restic integrity check and sandbox restore verification pipeline (`test-restore.sh` script, `restic-verify.service`, and `restic-verify.timer`).
-* **Ansible Configuration Modernization:** Updated `ansible.cfg` to use native `result_format = yaml` callback formatting under `[callback_default]` (replacing the deprecated `community.general.yaml` callback) and enabled automatic `.vault_pass` file loading via `vault_password_file`.
+* **Ansible Configuration Modernisation:** Updated `ansible.cfg` to use native `result_format = yaml` callback formatting under `[callback_default]` (replacing the deprecated `community.general.yaml` callback) and enabled automatic `.vault_pass` file loading via `vault_password_file`.
 
 ### Documentation
 * **Repository Architecture & Tree:** Updated `README.md` to document the automated restore verification pipeline and aligned the repository layout tree with on-disk paths (`ansible.cfg`, `group_vars/homelab/backup.yml`).
@@ -60,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2026-07-26
 
 ### Added
-* **Centralized Observability:** Integrated Vector journald log shipping to Loki indexing engine and Grafana dashboard visualisation.
+* **Centralised Observability:** Integrated Vector journald log shipping to Loki indexing engine and Grafana dashboard visualisation.
 * **Pi-hole v6 HTTPS:** Native TLS support for Pi-hole v6 web interface with automated certificate management.
 * **Rootless Quadlets:** Converted core DNS services (Pi-hole and Unbound) to native Podman Quadlet systemd container definitions.
 
@@ -74,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Python Versioning & Header Tooling**: Introduced `scripts/bump_version.py` replacing `bump-version.sh` to automate semantic version bumps (`patch`, `minor`, `major`), git tag creation, and header metadata sync across all templates (`.j2`), scripts (`.sh`, `.py`), playbooks (`.yml`), and configuration files (`.ini`, `.toml`, `.json`).
 
 ### Changed
-- **Ansible Fact & Header Standardization**: Refactored playbook and task files to use explicit `ansible_facts[...]` dictionary references to eliminate top-level variable deprecation warnings, and standardized all file headers (File, Description, Author, Version, License).
+- **Ansible Fact & Header Standardisation**: Refactored playbook and task files to use explicit `ansible_facts[...]` dictionary references to eliminate top-level variable deprecation warnings, and standardized all file headers (File, Description, Author, Version, License).
 - **Legacy Unit Cleanup**: Updated `roles/podman_stack/tasks/main.yml` to automatically detect and purge non-Quadlet user systemd units (`pihole.service`, `unbound.service`) to prevent service override conflicts.
 - **Documentation & Runbooks**: Updated `README.md` to document Quadlet architecture, systemd management commands (`systemctl --user`), the new script suite, and updated repository structure.
 
@@ -108,7 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Support for Pi-hole v6 replication via Nebula Sync configuration task.
 
 ### Changed
-* **Repository Sanitization**: Fully sanitised all playbooks, configs, inventory, and documentation files to replace user-specific credentials, IPs, hostnames, and paths with generic placeholders (`<item>`).
+* **Repository Sanitisation**: Fully sanitised all playbooks, configs, inventory, and documentation files to replace user-specific credentials, IPs, hostnames, and paths with generic placeholders (`<item>`).
 * **SELinux Compatibility**: Added `:z` volume flags to Podman volume mounts for RHEL/CentOS/Fedora compatibility.
 * **Documentation Standards**: Updated all runbooks (`topology-and-disaster-recovery.md`, `encrypted-backup-and-retention.md`, `pihole-v6-tls-setup.md`, `README.md`) with explicit user instructions on configuration placeholders, command flags (`-K`), and setup prerequisites.
 

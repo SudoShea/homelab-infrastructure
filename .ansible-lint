@@ -2,7 +2,7 @@
 # Config       : .ansible-lint
 # Description  : Configuration rules and exclusions for Ansible Lint CI pipeline
 # Author       : SudoShea
-# Version      : 1.8.4
+# Version      : 1.8.5
 # Licence      : MIT
 # ==============================================================================
 ---

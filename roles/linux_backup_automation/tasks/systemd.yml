@@ -2,7 +2,7 @@
 # File        : tasks/systemd.yml
 # Description : Configures systemd service and timer units for automated backups
 # Author      : SudoShea
-# Version     : 1.8.4
+# Version     : 1.8.5
 # License     : MIT
 # ==============================================================================
 ---
