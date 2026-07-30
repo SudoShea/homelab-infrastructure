@@ -3,7 +3,7 @@
 # File        : scripts/run.sh
 # Description : Generic execution wrapper for homelab-infrastructure
 # Author      : SudoShea
-# Version     : 1.8.2
+# Version     : 1.8.3
 # License     : MIT
 # ==============================================================================
 

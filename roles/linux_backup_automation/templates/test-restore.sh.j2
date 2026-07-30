@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Template     : templates/test-restore.sh.j2
+# Description  : Automated weekly Restic integrity check and sandbox restore test
+# Author       : SudoShea
+# Version      : 1.8.3
+# Licence      : MIT
+# ==============================================================================
+set -euo pipefail
+
+RESTIC_REPOSITORY="{{ restic_repository_path | default('/var/backups/restic') }}"
+RESTIC_PASSWORD_FILE="{{ restic_password_file | default('/etc/restic/password') }}"
+RESTORE_SANDBOX=""
+
+# Clean up temporary sandbox directory on exit (pass or fail)
+cleanup() {
+    if [[ -n "${RESTORE_SANDBOX}" && -d "${RESTORE_SANDBOX}" ]]; then
+        echo "[INFO] Cleaning up temporary sandbox directory: ${RESTORE_SANDBOX}"
+        rm -rf "${RESTORE_SANDBOX}"
+    fi
+}
+trap cleanup EXIT
+
+echo "[INFO] Starting weekly automated Restic restore verification..."
+
+# Step 1: Verify repository index and data subset integrity
+echo "[INFO] Executing integrity check ({{ restic_verify_data_subset }} data subset)..."
+restic -r "${RESTIC_REPOSITORY}" \
+    --password-file "${RESTIC_PASSWORD_FILE}" \
+    check --read-data-subset={{ restic_verify_data_subset }}
+
+# Step 2: Create isolated temporary sandbox
+RESTORE_SANDBOX=$(mktemp -d /tmp/restic-restore-test.XXXXXX)
+echo "[INFO] Sandbox created at: ${RESTORE_SANDBOX}"
+
+# Step 3: Test restoring latest snapshot into sandbox
+echo "[INFO] Restoring latest snapshot into sandbox..."
+restic -r "${RESTIC_REPOSITORY}" \
+    --password-file "${RESTIC_PASSWORD_FILE}" \
+    restore latest \
+    --target "${RESTORE_SANDBOX}"
+
+# Step 4: Validate restored contents
+if [[ -d "${RESTORE_SANDBOX}" ]] && [[ $(ls -A "${RESTORE_SANDBOX}") ]]; then
+    echo "[SUCCESS] Restic restore test completed successfully. Snapshot structure verified."
+    exit 0
+else
+    echo "[ERROR] Verification failed: Restored sandbox directory is empty or missing expected paths!"
+    exit 1
+fi

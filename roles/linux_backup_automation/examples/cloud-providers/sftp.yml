@@ -1,0 +1,10 @@
+# Example variables for remote Linux backup node via SFTP
+restic_rclone_sync_enabled: true
+restic_rclone_remote_name: "sftp-remote"
+restic_rclone_type: "sftp"
+restic_rclone_remote_target: "sftp-remote:/var/backups/remote-storage"
+restic_rclone_options:
+  host: "backup-node.local"
+  user: "backupuser"
+  port: "22"
+  key_file: "/root/.ssh/id_ed25519"

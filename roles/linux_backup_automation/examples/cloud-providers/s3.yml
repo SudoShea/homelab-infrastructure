@@ -1,0 +1,10 @@
+# Example variables for AWS S3 / MinIO / S3-Compatible
+restic_rclone_sync_enabled: true
+restic_rclone_remote_name: "s3-remote"
+restic_rclone_type: "s3"
+restic_rclone_remote_target: "s3-remote:my-s3-bucket"
+restic_rclone_options:
+  provider: "AWS"
+  access_key_id: "{{ vault_s3_access_key }}"
+  secret_access_key: "{{ vault_s3_secret_key }}"
+  region: "us-east-1"

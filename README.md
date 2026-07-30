@@ -18,7 +18,7 @@ An enterprise-grade Infrastructure-as-Code (IaC) repository for provisioning a r
 * **Unbound (Recursive DNS):** Direct root-server DNS resolver with dynamic architecture detection (`aarch64` / `x86_64`) forwarding queries to root servers securely over port `5335`.
 * **Centralized Observability Stack:** Log aggregation via Vector (journald shipper), Loki (indexing engine), and Grafana (TLS-encrypted dashboards).
 * **Multi-OS Host Support:** Automated security patching for both Debian/Ubuntu (`unattended-upgrades`) and RHEL/Fedora (`dnf-automatic`).
-* **3-2-1 Encrypted Backup Engine:** Automated, deduplicated, AES-256 encrypted snapshots using Restic, managed by native systemd daily timers and offsite multi-cloud replication via Rclone (`linux_backup_automation` Ansible role).
+* **3-2-1 Encrypted Backup Engine:** Automated, deduplicated, AES-256 encrypted snapshots using Restic, managed by native systemd daily timers, automated weekly sandbox restore verification (`test-restore.sh` & `restic-verify.timer`), and offsite multi-cloud replication via Rclone (`linux_backup_automation` Ansible role).
 
 ---
 
@@ -33,8 +33,9 @@ homelab-infrastructure/
 │   └── topology-and-disaster-recovery.md # Network topology & disaster recovery runbook
 ├── group_vars/
 │   ├── all/
-│   │   └── vault.yml.example             # Secrets reference template (Restic, Rclone, Grafana)
-│   └── homelab_nodes/
+│   │   ├── vault.yml                     # Encrypted production secrets (Restic, Rclone, Grafana)
+│   │   └── vault.yml.example             # Secrets reference template
+│   └── homelab/
 │       └── backup.yml                    # Multi-remote Restic & Rclone backup configuration
 ├── roles/
 │   ├── logging_server/                   # Loki log engine & Grafana dashboard provisioning
@@ -43,6 +44,7 @@ homelab-infrastructure/
 ├── scripts/
 │   ├── bump_version.py                   # Version bump & automated file header sync script
 │   └── run.sh                            # Deployment wrapper script (check/run modes)
+├── ansible.cfg                           # Default runtime & callback configuration
 ├── CHANGELOG.md                          # Version release history
 ├── inventory.ini                         # Production deployment target template
 ├── inventory.local.ini                   # Local testing inventory target (git-ignored)
@@ -73,7 +75,7 @@ Clone the repository and install the required Ansible Galaxy collections and ext
 git clone https://github.com/SudoShea/homelab-infrastructure.git
 cd homelab-infrastructure
 
-ansible-galaxy install -r requirements.yml
+ansible-galaxy install -r requirements.yml --force
 ```
 ### 2. Configure Inventory & Variables
 Set up your target environment and encrypted secrets:

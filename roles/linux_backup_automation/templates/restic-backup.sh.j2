@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# File        : templates/restic-backup.sh.j2
+# Description : Automated Restic snapshot, retention pruning, and multi-remote sync
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+
+set -euo pipefail
+
+export RESTIC_REPOSITORY="{{ restic_repo_path }}"
+export RESTIC_PASSWORD_FILE="{{ restic_password_file }}"
+
+echo "[*] Starting Restic backup session at $(date)..."
+
+# 1. Create Snapshot with maximum zstd compression
+restic backup \
+  --compression max \
+  --exclude-caches \
+  {% for source in restic_backup_sources %}"{{ source }}" {% endfor %}
+
+echo "[*] Applying retention rules & pruning unreferenced chunks..."
+
+# 2. Prune old snapshots based on retention policies
+restic forget \
+  --keep-daily "{{ restic_keep_daily }}" \
+  --keep-weekly "{{ restic_keep_weekly }}" \
+  --keep-monthly "{{ restic_keep_monthly }}" \
+  --keep-yearly "{{ restic_keep_yearly }}" \
+  --prune
+
+{% if restic_rclone_sync_enabled | bool %}
+{% if restic_rclone_remotes is defined and restic_rclone_remotes | length > 0 %}
+{% for remote in restic_rclone_remotes %}
+echo "[*] Syncing deduplicated repository offsite via rclone to {{ remote.name }} ({{ remote.target }})..."
+
+rclone sync "{{ restic_repo_path }}" "{{ remote.name }}:{{ remote.target }}" \
+  --config="{{ restic_rclone_config_path }}" \
+  --fast-list \
+  --transfers=4
+{% endfor %}
+{% else %}
+echo "[*] Syncing deduplicated repository offsite via rclone to {{ restic_rclone_remote_target }}..."
+
+rclone sync "{{ restic_repo_path }}" "{{ restic_rclone_remote_target }}" \
+  --config="{{ restic_rclone_config_path }}" \
+  --fast-list \
+  --transfers=4
+{% endif %}
+{% endif %}
+
+echo "[+] Restic backup and offsite sync completed successfully at $(date)."

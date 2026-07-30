@@ -1,0 +1,24 @@
+# ==============================================================================
+# File        : templates/rclone.conf.j2
+# Description : Multi-remote & single-remote rclone configuration template
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+
+{% if restic_rclone_remotes is defined and restic_rclone_remotes | length > 0 %}
+{% for remote in restic_rclone_remotes %}
+[{{ remote.name }}]
+type = {{ remote.type }}
+{% for key, value in remote.options.items() %}
+{{ key }} = {{ value }}
+{% endfor %}
+
+{% endfor %}
+{% else %}
+[{{ restic_rclone_remote_name }}]
+type = {{ restic_rclone_type }}
+{% for key, value in restic_rclone_options.items() %}
+{{ key }} = {{ value }}
+{% endfor %}
+{% endif %}

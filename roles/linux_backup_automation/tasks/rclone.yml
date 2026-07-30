@@ -1,0 +1,31 @@
+# ==============================================================================
+# File        : tasks/rclone.yml
+# Description : Installs rclone and deploys encrypted cloud configuration
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+---
+- name: Install rclone package for offsite sync
+  ansible.builtin.package:
+    name: rclone
+    state: present
+  when: restic_rclone_sync_enabled | bool
+
+- name: Ensure rclone configuration directory exists
+  ansible.builtin.file:
+    path: "{{ restic_rclone_config_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  when: restic_rclone_sync_enabled | bool
+
+- name: Deploy encrypted rclone configuration file
+  ansible.builtin.template:
+    src: rclone.conf.j2
+    dest: "{{ restic_rclone_config_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+  when: restic_rclone_sync_enabled | bool

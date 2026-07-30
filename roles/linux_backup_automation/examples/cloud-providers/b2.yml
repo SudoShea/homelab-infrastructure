@@ -1,0 +1,8 @@
+# Example variables for Backblaze B2
+restic_rclone_sync_enabled: true
+restic_rclone_remote_name: "b2-remote"
+restic_rclone_type: "b2"
+restic_rclone_remote_target: "b2-remote:my-b2-bucket"
+restic_rclone_options:
+  account: "{{ vault_b2_account_id }}"
+  key: "{{ vault_b2_application_key }}"

@@ -1,0 +1,46 @@
+# ==============================================================================
+# File        : defaults/main.yml
+# Description : Vendor-agnostic default configuration variables
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+---
+# --- Repository & Secret Paths ---
+restic_repo_path: "/var/backups/restic"
+restic_password_file: "/etc/restic/password"
+restic_password: "{{ vault_restic_password | default('') }}"
+
+# --- Backup Target Paths ---
+restic_backup_sources:
+  - "/etc"
+  - "/var/lib/containers/storage/volumes"
+
+# --- Retention Policy ---
+restic_keep_daily: 7
+restic_keep_weekly: 4
+restic_keep_monthly: 12
+restic_keep_yearly: 1
+
+# --- Automation Schedule ---
+restic_timer_schedule: "*-*-* 02:00:00"  # Daily at 02:00 AM
+
+# --- Offsite Cloud Replication (Vendor Agnostic Schema) ---
+restic_rclone_sync_enabled: false
+restic_rclone_remote_name: "offsite-storage"
+restic_rclone_type: ""                      # E.g., "s3", "google cloud storage", "b2", "sftp"
+restic_rclone_remote_target: "{{ restic_rclone_remote_name }}:my-bucket-name"
+restic_rclone_config_path: "/etc/rclone/rclone.conf"
+
+# Generic dictionary rendered dynamically into rclone.conf
+restic_rclone_options: {}
+
+# --- System Executables ---
+restic_script_path: "/usr/local/bin/restic-backup.sh"
+restic_restore_helper_path: "/usr/local/bin/restic-restore.sh"
+
+# --- Automated Restore Verification Settings ---
+restic_verify_enabled: true
+restic_verify_calendar: "Sun *-*-* 03:00:00"
+restic_verify_data_subset: "10%"
+restic_verify_script_path: "/usr/local/bin/test-restore.sh"

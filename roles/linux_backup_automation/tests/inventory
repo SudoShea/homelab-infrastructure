@@ -1,0 +1,6 @@
+# ==============================================================================
+# File        : tests/inventory
+# Description : Local test inventory for linux-backup-automation
+# ==============================================================================
+[test_nodes]
+localhost ansible_connection=local

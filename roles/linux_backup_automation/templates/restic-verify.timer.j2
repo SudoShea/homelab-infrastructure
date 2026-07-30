@@ -1,0 +1,16 @@
+# ==============================================================================
+# Timer        : restic-verify.timer
+# Description  : Systemd timer for scheduling weekly Restic restore verification
+# Author       : SudoShea
+# Version      : 1.8.3
+# Licence      : MIT
+# ==============================================================================
+[Unit]
+Description=Weekly Restic Backup Verification Timer
+
+[Timer]
+OnCalendar={{ restic_verify_calendar }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

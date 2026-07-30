@@ -1,0 +1,49 @@
+# ==============================================================================
+# File        : tasks/systemd.yml
+# Description : Configures systemd service and timer units for automated backups
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+---
+- name: Deploy Restic execution script wrapper
+  ansible.builtin.template:
+    src: restic-backup.sh.j2
+    dest: "{{ restic_script_path }}"
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Deploy Restic CLI restore helper utility
+  ansible.builtin.copy:
+    src: restic-restore.sh
+    dest: "{{ restic_restore_helper_path }}"
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: restic-backup.service.j2
+    dest: /etc/systemd/system/restic-backup.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy systemd timer unit
+  ansible.builtin.template:
+    src: restic-backup.timer.j2
+    dest: /etc/systemd/system/restic-backup.timer
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start restic-backup.timer
+  ansible.builtin.systemd:
+    name: restic-backup.timer
+    enabled: true
+    state: started

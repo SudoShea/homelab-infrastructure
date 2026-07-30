@@ -2,7 +2,7 @@
 # File        : group_vars/all/vault.yml.example
 # Description : Example Ansible Vault secrets template (Copy to vault.yml)
 # Author      : SudoShea
-# Version     : 1.8.2
+# Version     : 1.8.3
 # Licence     : MIT
 # ==============================================================================
 ---

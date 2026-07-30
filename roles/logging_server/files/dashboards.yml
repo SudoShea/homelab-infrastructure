@@ -2,7 +2,7 @@
 # File        : roles/logging_server/files/dashboards.yml
 # Description : Grafana dashboard provisioning provider configuration
 # Author      : SudoShea
-# Version     : 1.8.2
+# Version     : 1.8.3
 # License     : MIT
 # ==============================================================================
 apiVersion: 1

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.3] - 2026-07-30
+
+### Changed
+* **Backup Automation Upgrade:** Pinned `linux_backup_automation` role dependency to `v1.1.0` in `requirements.yml` to integrate the automated weekly Restic integrity check and sandbox restore verification pipeline (`test-restore.sh` script, `restic-verify.service`, and `restic-verify.timer`).
+* **Ansible Configuration Modernization:** Updated `ansible.cfg` to use native `result_format = yaml` callback formatting under `[callback_default]` (replacing the deprecated `community.general.yaml` callback) and enabled automatic `.vault_pass` file loading via `vault_password_file`.
+
+### Documentation
+* **Repository Architecture & Tree:** Updated `README.md` to document the automated restore verification pipeline and aligned the repository layout tree with on-disk paths (`ansible.cfg`, `group_vars/homelab/backup.yml`).
+
+---
+
 ## [1.8.2] - 2026-07-29
 
 ### Added

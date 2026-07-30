@@ -1,0 +1,28 @@
+# ==============================================================================
+# GitHub Action : .github/workflows/lint.yml
+# Description   : Runs ansible-lint to enforce syntax and best practices
+# Author        : SudoShea
+# Version       : 1.0.6
+# License       : MIT
+# ==============================================================================
+name: Ansible Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  lint:
+    name: Run Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@main

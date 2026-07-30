@@ -2,12 +2,12 @@
 # Playbook    : site.yml
 # Description : Master Ansible playbook for homelab infrastructure deployment
 # Author      : SudoShea
-# Version     : 1.8.2
+# Version     : 1.8.3
 # License     : MIT
 # ==============================================================================
 ---
 - name: Deploy Rootless Podman Homelab Stack
-  hosts: homelab
+  hosts: homelab_nodes
   gather_facts: true
   roles:
     - podman_stack
@@ -26,7 +26,7 @@
     - logging_server
 
 - name: Deploy Log Shipper (Vector)
-  hosts: homelab
+  hosts: homelab_nodes
   gather_facts: true
   roles:
     - logging_shipper

@@ -1,0 +1,26 @@
+# ==============================================================================
+# Role Task   : tasks/main.yml
+# Description : Main task orchestrator for linux_backup_automation
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+---
+- name: Execute Backup Automation Engine Tasks
+  become: true
+  block:
+    - name: Include Restic Installation Tasks
+      ansible.builtin.include_tasks: install.yml
+
+    - name: Include Rclone Installation Tasks
+      ansible.builtin.include_tasks: rclone.yml
+
+    - name: Include Repository Initialization Tasks
+      ansible.builtin.include_tasks: init.yml
+
+    - name: Include Systemd Automation Tasks
+      ansible.builtin.include_tasks: systemd.yml
+
+- name: Include automated restore verification tasks
+  ansible.builtin.include_tasks: verify.yml
+  when: restic_verify_enabled | bool

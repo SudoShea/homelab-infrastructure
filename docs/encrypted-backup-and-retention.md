@@ -4,8 +4,8 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.8.2
-* **Last Updated:** 2026-07-29
+* **Version:** 1.8.3
+* **Last Updated:** 2026-07-30
 
 ---
 
@@ -105,7 +105,7 @@ ansible-playbook -i inventory.ini site.yml -K
 
 ## 🧪 6. Verification & Integrity Testing
 * **Automated Integrity Checks**: `restic check` runs natively during backup processing to verify repository index locks and data blob hashes.
-* **Restore Dry-Run Testing*: Run `restic-restore.sh` or mount repository snapshots locally to verify readable state without touching live production volumes:
+* **Restore Dry-Run Testing**: Run `restic-restore.sh` or mount repository snapshots locally to verify readable state without touching live production volumes:
 ```bash
 sudo mkdir -p /mnt/restic-test
 sudo restic -r /var/backups/restic --password-file /etc/restic/password mount /mnt/restic-test

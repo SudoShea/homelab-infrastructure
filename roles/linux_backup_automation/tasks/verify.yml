@@ -1,0 +1,41 @@
+# ==============================================================================
+# Tasks        : tasks/verify.yml
+# Description  : Configures automated weekly Restic backup restore verification
+# Author       : SudoShea
+# Version      : 1.8.3
+# Licence      : MIT
+# ==============================================================================
+---
+- name: Deploy automated restore verification script
+  ansible.builtin.template:
+    src: test-restore.sh.j2
+    dest: "{{ restic_verify_script_path }}"
+    owner: root
+    group: root
+    mode: '0755'
+  when: restic_verify_enabled | bool
+
+- name: Deploy restic-verify systemd service and timer
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: 'restic-verify.service.j2', dest: '/etc/systemd/system/restic-verify.service' }
+    - { src: 'restic-verify.timer.j2', dest: '/etc/systemd/system/restic-verify.timer' }
+  notify: Reload systemd daemon
+  when: restic_verify_enabled | bool
+
+- name: Flush handlers to ensure systemd picks up new unit files
+  ansible.builtin.meta: flush_handlers
+  when: restic_verify_enabled | bool
+
+- name: Enable and start restic-verify systemd timer
+  ansible.builtin.systemd:
+    name: restic-verify.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: restic_verify_enabled | bool

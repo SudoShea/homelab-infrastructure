@@ -4,8 +4,8 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.8.2
-* **Last Updated:** 2026-07-29
+* **Version:** 1.8.3
+* **Last Updated:** 2026-07-30
 
 This guide details the architecture, deployment, and Root CA TLS configuration for the centralised logging stack (Vector $\rightarrow$ Loki $\rightarrow$ Grafana) deployed across the homelab infrastructure.
 

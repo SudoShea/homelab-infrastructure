@@ -1,0 +1,9 @@
+# Example variables for Google Cloud Storage
+restic_rclone_sync_enabled: true
+restic_rclone_remote_name: "gcs-remote"
+restic_rclone_type: "google cloud storage"
+restic_rclone_remote_target: "gcs-remote:my-gcs-bucket"
+restic_rclone_options:
+  project_number: "{{ vault_gcs_project_number }}"
+  service_account_file: "/etc/rclone/gcs-key.json"
+  object_acl: "private"

@@ -1,0 +1,18 @@
+# ==============================================================================
+# Service      : restic-verify.service
+# Description  : Systemd unit for automated weekly Restic backup restore verification
+# Author       : SudoShea
+# Version      : 1.8.3
+# Licence      : MIT
+# ==============================================================================
+[Unit]
+Description=Restic Backup Weekly Restore Verification Test
+Documentation=https://github.com/SudoShea/linux-backup-automation
+After=network.target restic-backup.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart={{ restic_verify_script_path }}
+StandardOutput=journal
+StandardError=journal

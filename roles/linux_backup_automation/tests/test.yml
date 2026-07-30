@@ -1,0 +1,20 @@
+# ==============================================================================
+# File        : tests/test.yml
+# Description : Standalone test playbook for linux-backup-automation role
+# Author      : SudoShea
+# Version     : 1.8.3
+# License     : MIT
+# ==============================================================================
+---
+- name: Test linux-backup-automation Role Execution
+  hosts: test_nodes
+  become: true
+  vars:
+    restic_repo_path: "/tmp/restic-test-repo"
+    # Pulls password securely from local execution environment
+    restic_password: "{{ lookup('env', 'TEST_RESTIC_PASSWORD') | default('TemporaryLocalTestKeyOnly!') }}"
+    restic_backup_sources:
+      - "/etc/hosts"
+    restic_rclone_sync_enabled: false
+  roles:
+    - role: linux_backup_automation

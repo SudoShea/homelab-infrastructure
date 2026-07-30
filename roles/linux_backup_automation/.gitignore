@@ -1,0 +1,37 @@
+# ==============================================================================
+# Git Ignore    : .gitignore
+# Description   : Exclusion patterns for temporary files, caches, and OS clutter
+# Author        : SudoShea
+# Version       : 1.8.3
+# License       : MIT
+# ==============================================================================
+
+# --- Python Bytecode & Cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+
+# --- Ansible & Test Execution Artifacts ---
+*.retry
+ansible.log
+.ansible/
+.ansible-lint
+
+# --- Secrets & Keys (Safety Net) ---
+.vault_pass
+.vault-password
+vault_pass.txt
+*.key
+*.pem
+
+# --- OS & Editor Clutter ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
