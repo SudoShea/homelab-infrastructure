@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.4] - 2026-07-30
+
+### Fixed
+* **CI Linting Pipeline:** Updated `.github/workflows/lint.yml` to generate a temporary `.vault_pass` file prior to running `ansible-lint`, preventing syntax check failures triggered by the `vault_password_file` setting in `ansible.cfg`.
+* **Ansible-Lint Rule Exclusions:** Added `.ansible-lint` configuration to ignore external Galaxy dependency roles installed under `roles/linux_backup_automation/` and skipped the `var-naming` rule to resolve CI false positives on third-party role variables.
+
+---
+
 ## [1.8.3] - 2026-07-30
 
 ### Changed

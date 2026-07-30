@@ -1,0 +1,17 @@
+# ==============================================================================
+# Config       : .ansible-lint
+# Description  : Configuration rules and exclusions for Ansible Lint CI pipeline
+# Author       : SudoShea
+# Version      : 1.8.4
+# Licence      : MIT
+# ==============================================================================
+---
+profile: min
+
+# Exclude external dependency roles installed via ansible-galaxy
+exclude_paths:
+  - roles/linux_backup_automation/
+
+# Skip role variable prefix enforcement on external role variables
+skip_list:
+  - var-naming

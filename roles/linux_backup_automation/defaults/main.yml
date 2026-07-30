@@ -2,7 +2,7 @@
 # File        : defaults/main.yml
 # Description : Vendor-agnostic default configuration variables
 # Author      : SudoShea
-# Version     : 1.8.3
+# Version     : 1.8.4
 # License     : MIT
 # ==============================================================================
 ---

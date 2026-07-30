@@ -2,7 +2,7 @@
 # Workflow    : .github/workflows/lint.yml
 # Description : GitHub Actions CI workflow for Ansible-Lint static analysis
 # Author      : SudoShea
-# Version     : 1.8.2
+# Version     : 1.8.3
 # Licence     : MIT
 # ==============================================================================
 name: Ansible Linting
@@ -23,6 +23,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
+
+      - name: Create dummy vault password file for CI
+        run: touch .vault_pass
 
       - name: Run Ansible-Lint
         uses: ansible/ansible-lint@main

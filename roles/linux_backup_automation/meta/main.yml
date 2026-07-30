@@ -2,7 +2,7 @@
 # Role Metadata : meta/main.yml
 # Description   : Galaxy metadata and requirements for linux_backup_automation
 # Author        : SudoShea
-# Version       : 1.8.3
+# Version       : 1.8.4
 # License       : MIT
 # ==============================================================================
 galaxy_info:
