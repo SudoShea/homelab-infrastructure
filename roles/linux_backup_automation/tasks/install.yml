@@ -2,7 +2,7 @@
 # File        : tasks/install.yml
 # Description : Package installation tasks for Restic
 # Author      : SudoShea
-# Version     : 1.8.5
+# Version     : 1.9.0
 # License     : MIT
 # ==============================================================================
 ---

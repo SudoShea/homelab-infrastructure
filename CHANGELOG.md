@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0] - 2026-08-02
+
+### Added
+* **`system_maintenance` Role:** Introduced a modular Ansible role dedicated to automated host, container, and DNS database housekeeping across Debian and RHEL nodes.
+* **Automated Weekly Systemd Timer:** Deployed user-scoped systemd unit definitions (`homelab-maintenance.service` & `homelab-maintenance.timer`) configured for weekly execution every Sunday at 04:00 AM with `Persistent=true` catch-up support.
+* **Container & Journal Hygiene:** Automated dangling Podman image pruning (`podman image prune -f`) and user journal log vacuuming (capped at 200MB).
+* **Cross-Distro Package Cleanups:** Configured passwordless sudo execution for unused package autoremoval and cache clearing via `apt` (Debian) and `dnf` (RHEL).
+* **Pi-hole FTL Database Vacuuming:** Integrated Pi-hole gravity feed updates (`pihole -g`) and SQLite database vacuuming using `podman unshare` to safely respect rootless subUID user namespaces.
+* **Host Reboot Auditing:** Implemented non-disruptive kernel and core update auditing via `/var/run/reboot-required` (Debian) and `needs-restarting -r` (RHEL).
+
+### Changed
+* **Master Playbook Integration (`site.yml`):** Hooked `system_maintenance` into `site.yml` under the `maintenance` tag, enforced with `serial: 1` rolling execution to guarantee uninterrupted local DNS availability.
+* **Ansible Fact Modernisation:** Updated OS family evaluation logic across tasks to use `ansible_facts['os_family']` syntax, eliminating deprecation warnings for future `ansible-core` compatibility.
+
+---
+
 ## [1.8.5] - 2026-07-30
 
 ### Fixed

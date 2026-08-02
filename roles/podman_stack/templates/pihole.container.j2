@@ -2,7 +2,7 @@
 # File        : roles/podman_stack/templates/pihole.container.j2
 # Description : Podman Quadlet unit definition for Pi-hole DNS sinkhole server
 # Author      : SudoShea
-# Version     : 1.8.5
+# Version     : 1.9.0
 # License     : MIT
 # ==============================================================================
 
@@ -21,6 +21,7 @@ Environment=FTLCONF_dns_upstreams=127.0.0.1#5335
 Environment=PIHOLE_DNS_=127.0.0.1#5335
 Environment=FTLCONF_webserver_port=80,443s
 Environment=FTLCONF_webserver_domain=<secondary_domain>
+Environment=FTLCONF_RATE_LIMIT=3000/60
 Volume={{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole:/etc/pihole:z
 Volume={{ ansible_facts['user_dir'] }}/homelab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d:z
 

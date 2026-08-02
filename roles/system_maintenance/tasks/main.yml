@@ -1,0 +1,161 @@
+# ==============================================================================
+# Role        : system_maintenance
+# File        : roles/system_maintenance/tasks/main.yml
+# Description : Automated host, container maintenance, and weekly timer setup
+# Author      : SudoShea
+# Version     : 1.9.0
+# Licence     : MIT
+# ==============================================================================
+---
+# ------------------------------------------------------------------------------
+# 1. Podman & User Log Hygiene (User Scope)
+# ------------------------------------------------------------------------------
+- name: Prune dangling Podman container images
+  ansible.builtin.command:
+    cmd: podman image prune -f
+  register: podman_prune_result
+  changed_when: "'Deleted' in podman_prune_result.stdout"
+
+- name: Vacuum user-scoped journal logs to 200MB limit
+  ansible.builtin.command:
+    cmd: journalctl --user --vacuum-size=200M
+  changed_when: false
+
+# ------------------------------------------------------------------------------
+# 2. Package & Cache Cleanup (Host Scope)
+# ------------------------------------------------------------------------------
+- name: Remove unused packages and flush apt cache (Debian/Ubuntu)
+  ansible.builtin.apt:
+    autoremove: true
+    purge: true
+    clean: true
+  become: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Remove unused packages (RHEL/Fedora)
+  ansible.builtin.dnf:
+    autoremove: true
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Flush dnf package cache (RHEL/Fedora)
+  ansible.builtin.command:
+    cmd: dnf clean all
+  changed_when: false
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+# ------------------------------------------------------------------------------
+# 3. Pi-hole & DNS Engine Maintenance
+# ------------------------------------------------------------------------------
+- name: Update Pi-hole gravity ad-blocking feeds
+  ansible.builtin.command:
+    cmd: podman exec pihole pihole -g
+  changed_when: false
+  when: "'dns_servers' in group_names"
+
+- name: Ensure sqlite3 CLI tool is installed on host
+  ansible.builtin.package:
+    name: "{{ 'sqlite3' if ansible_facts['os_family'] == 'Debian' else 'sqlite' }}"
+    state: present
+  become: true
+  when: "'dns_servers' in group_names"
+
+- name: Vacuum Pi-hole FTL SQLite database to optimise disk usage
+  ansible.builtin.command:
+    cmd: "podman unshare sqlite3 {{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole/pihole-FTL.db 'VACUUM;'"
+  changed_when: false
+  when: "'dns_servers' in group_names"
+
+# ------------------------------------------------------------------------------
+# 4. Host Reboot Requirement Audit
+# ------------------------------------------------------------------------------
+- name: Check if system reboot is required (Debian/Ubuntu)
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: debian_reboot_check
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Check if system reboot is required (RHEL/Fedora)
+  ansible.builtin.command:
+    cmd: needs-restarting -r
+  register: rhel_reboot_check
+  failed_when: false
+  changed_when: false
+  become: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Report host reboot status
+  ansible.builtin.debug:
+    msg: >-
+      {% if ansible_facts['os_family'] == 'Debian' and debian_reboot_check.stat.exists %}
+      [WARNING] Reboot required on {{ inventory_hostname }} due to kernel/system updates.
+      {% elif ansible_facts['os_family'] == 'RedHat' and rhel_reboot_check.rc == 1 %}
+      [WARNING] Reboot required on {{ inventory_hostname }} due to core package updates.
+      {% else %}
+      [OK] Host {{ inventory_hostname }} is up to date and does not require a reboot.
+      {% endif %}
+
+# ------------------------------------------------------------------------------
+# 5. Automated Weekly Schedule Deployment (Sunday 04:00 AM)
+# ------------------------------------------------------------------------------
+- name: Ensure systemd user configuration directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.config/systemd/user"
+    state: directory
+    mode: '0755'
+
+- name: Deploy maintenance execution script
+  ansible.builtin.copy:
+    dest: "{{ ansible_facts['user_dir'] }}/scripts/homelab-maintenance.sh"
+    owner: "{{ ansible_facts['user_id'] }}"
+    mode: '0755'
+    content: |
+      #!/usr/bin/env bash
+      # Managed by Ansible - system_maintenance role
+      podman image prune -f
+      journalctl --user --vacuum-size=200M
+      if [ -f /usr/bin/apt-get ]; then
+        sudo apt-get autoremove -y --purge && sudo apt-get clean
+      elif [ -f /usr/bin/dnf ]; then
+        sudo dnf autoremove -y && sudo dnf clean all
+      fi
+      podman exec pihole pihole -g
+      podman unshare sqlite3 {{ ansible_facts['user_dir'] }}/homelab/pihole/etc-pihole/pihole-FTL.db "VACUUM;"
+
+- name: Deploy systemd service definition for maintenance
+  ansible.builtin.copy:
+    dest: "{{ ansible_facts['user_dir'] }}/.config/systemd/user/homelab-maintenance.service"
+    owner: "{{ ansible_facts['user_id'] }}"
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Weekly Homelab Container and Host Maintenance
+
+      [Service]
+      Type=oneshot
+      ExecStart={{ ansible_facts['user_dir'] }}/scripts/homelab-maintenance.sh
+
+- name: Deploy systemd timer definition for weekly maintenance
+  ansible.builtin.copy:
+    dest: "{{ ansible_facts['user_dir'] }}/.config/systemd/user/homelab-maintenance.timer"
+    owner: "{{ ansible_facts['user_id'] }}"
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Run Homelab Maintenance Weekly on Sunday Morning
+
+      [Timer]
+      OnCalendar=Sun *-*-* 04:00:00
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+- name: Enable and activate weekly maintenance systemd timer
+  ansible.builtin.systemd:
+    name: homelab-maintenance.timer
+    scope: user
+    enabled: true
+    state: started
+    daemon_reload: true

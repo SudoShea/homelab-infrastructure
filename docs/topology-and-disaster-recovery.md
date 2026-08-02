@@ -4,8 +4,8 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.8.5
-* **Last Updated:** 2026-07-30
+* **Version:** 1.9.0
+* **Last Updated:** 2026-08-02
 
 ---
 

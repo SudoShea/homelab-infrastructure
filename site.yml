@@ -2,15 +2,16 @@
 # Playbook    : site.yml
 # Description : Master Ansible playbook for homelab infrastructure deployment
 # Author      : SudoShea
-# Version     : 1.8.5
-# License     : MIT
+# Version     : 1.9.0
+# Licence     : MIT
 # ==============================================================================
 ---
 - name: Deploy Rootless Podman Homelab Stack
   hosts: homelab_nodes
   gather_facts: true
   roles:
-    - podman_stack
+    - role: podman_stack
+      tags: [podman]
 
 - name: Deploy Encrypted Backup Engine (Primary Source Host Only)
   hosts: primary_servers
@@ -18,15 +19,25 @@
   roles:
     - role: linux_backup_automation
       become: true
+      tags: [backup]
 
 - name: Deploy Centralized Logging Server (Loki & Grafana)
   hosts: storage_servers
   gather_facts: true
   roles:
-    - logging_server
+    - role: logging_server
+      tags: [logging, server]
 
 - name: Deploy Log Shipper (Vector)
   hosts: homelab_nodes
   gather_facts: true
   roles:
-    - logging_shipper
+    - role: logging_shipper
+      tags: [logging, shipper]
+
+- name: Execute Automated System & Container Maintenance
+  hosts: homelab_nodes
+  serial: 1  # Ensures pihole-primary completes before pihole-secondary starts
+  roles:
+    - role: system_maintenance
+      tags: [maintenance]
