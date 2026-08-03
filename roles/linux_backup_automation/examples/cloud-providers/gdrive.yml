@@ -2,7 +2,7 @@
 # File        : examples/cloud-providers/gdrive.yml
 # Description : Example variables for Google Drive rclone integration
 # Author      : SudoShea
-# Version     : 1.9.0
+# Version     : 1.10.0
 # License     : MIT
 # ==============================================================================
 ---

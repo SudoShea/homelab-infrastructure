@@ -3,7 +3,7 @@
 # File        : files/restic-restore.sh
 # Description : Interactive CLI helper utility for restoring and mounting Restic snapshots
 # Author      : SudoShea
-# Version     : 1.9.0
+# Version     : 1.10.0
 # License     : MIT
 # ==============================================================================
 

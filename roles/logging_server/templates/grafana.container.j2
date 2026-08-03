@@ -1,0 +1,24 @@
+[Unit]
+Description=Grafana Dashboard
+After=network-online.target loki.service
+Wants=loki.service
+
+[Container]
+Image=docker.io/grafana/grafana:latest
+ContainerName=grafana
+Network=host
+Environment=GF_SERVER_PROTOCOL=https
+Environment=GF_SERVER_CERT_FILE=/etc/grafana/certs/grafana.crt
+Environment=GF_SERVER_CERT_KEY=/etc/grafana/certs/grafana.key
+Environment=GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/systemd-podman-logs.json
+Volume={{ ansible_facts['user_dir'] }}/homelab/grafana/data:/var/lib/grafana:z,U
+Volume={{ ansible_facts['user_dir'] }}/homelab/grafana/certs:/etc/grafana/certs:z
+Volume={{ ansible_facts['user_dir'] }}/homelab/grafana/provisioning:/etc/grafana/provisioning:z
+Volume={{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards:/var/lib/grafana/dashboards:z
+AutoUpdate=registry
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

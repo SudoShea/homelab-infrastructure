@@ -1,0 +1,19 @@
+[Unit]
+Description=Grafana Loki Log Aggregator
+After=network-online.target
+
+[Container]
+Image=docker.io/grafana/loki:latest
+ContainerName=loki
+Network=host
+Exec=-config.file=/etc/loki/loki.yml
+Volume={{ ansible_facts['user_dir'] }}/homelab/loki/config/loki.yml:/etc/loki/loki.yml:z
+Volume={{ ansible_facts['user_dir'] }}/homelab/loki/data:/loki:z,U
+AutoUpdate=registry
+
+[Service]
+Restart=always
+MemoryMax=8G
+
+[Install]
+WantedBy=default.target

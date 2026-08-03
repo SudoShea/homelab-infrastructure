@@ -2,7 +2,7 @@
 # Task        : roles/logging_server/tasks/main.yml
 # Description : Provisioning tasks for Grafana Loki and Grafana Dashboard with TLS
 # Author      : SudoShea
-# Version     : 1.9.0
+# Version     : 1.10.0
 # License     : MIT
 # ==============================================================================
 ---
@@ -54,36 +54,38 @@
     dest: "{{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards/systemd-podman-logs.json"
     mode: '0644'
 
-- name: Deploy Grafana Loki container
-  containers.podman.podman_container:
-    name: loki
-    image: docker.io/grafana/loki:latest
-    state: started
-    recreate: true
-    restart_policy: always
-    network: host
-    memory: 8g
-    memory_swap: 8g
-    command: -config.file=/etc/loki/loki.yml
-    volumes:
-      - "{{ ansible_facts['user_dir'] }}/homelab/loki/config/loki.yml:/etc/loki/loki.yml:z"
-      - "{{ ansible_facts['user_dir'] }}/homelab/loki/data:/loki:z,U"
+- name: Ensure systemd user directory exists for Quadlets
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.config/containers/systemd"
+    state: directory
+    mode: '0755'
 
-- name: Deploy Grafana dashboard container
-  containers.podman.podman_container:
-    name: grafana
-    image: docker.io/grafana/grafana:latest
+- name: Deploy Loki Quadlet definition
+  ansible.builtin.template:
+    src: loki.container.j2
+    dest: "{{ ansible_facts['user_dir'] }}/.config/containers/systemd/loki.container"
+    mode: '0644'
+  register: loki_quadlet
+
+- name: Deploy Grafana Quadlet definition
+  ansible.builtin.template:
+    src: grafana.container.j2
+    dest: "{{ ansible_facts['user_dir'] }}/.config/containers/systemd/grafana.container"
+    mode: '0644'
+  register: grafana_quadlet
+
+- name: Reload systemd user daemon if Quadlets changed
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    scope: user
+  when: loki_quadlet.changed or grafana_quadlet.changed
+
+- name: Ensure Loki and Grafana Quadlet services are enabled and running
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
     state: started
-    recreate: true
-    restart_policy: always
-    network: host
-    env:
-      GF_SERVER_PROTOCOL: "https"
-      GF_SERVER_CERT_FILE: "/etc/grafana/certs/grafana.crt"
-      GF_SERVER_CERT_KEY: "/etc/grafana/certs/grafana.key"
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: "/var/lib/grafana/dashboards/systemd-podman-logs.json"
-    volumes:
-      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/data:/var/lib/grafana:z,U"
-      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/certs:/etc/grafana/certs:z"
-      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/provisioning:/etc/grafana/provisioning:z"
-      - "{{ ansible_facts['user_dir'] }}/homelab/grafana/dashboards:/var/lib/grafana/dashboards:z"
+    enabled: true
+    scope: user
+  loop:
+    - loki
+    - grafana
