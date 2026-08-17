@@ -4,8 +4,8 @@
 
 * **Repository:** `homelab-infrastructure`
 * **Author:** SudoShea
-* **Version:** 1.10.0
-* **Last Updated:** 2026-08-03
+* **Version:** 1.11.0
+* **Last Updated:** 2026-08-17
 
 This guide details how to generate a private Root Certificate Authority (CA), issue a local TLS certificate, and natively configure Pi-hole v6 for HTTPS without relying on an external reverse proxy (like Caddy or Nginx).
 

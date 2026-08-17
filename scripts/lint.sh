@@ -3,7 +3,7 @@
 # Script      : scripts/lint.sh
 # Description : Local Ansible static analysis and syntax verification wrapper
 # Author      : SudoShea
-# Version     : 1.10.0
+# Version     : 1.11.0
 # Licence     : MIT
 # ==============================================================================
 set -euo pipefail

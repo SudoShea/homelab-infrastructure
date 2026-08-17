@@ -1,0 +1,17 @@
+# ==============================================================================
+# Playbook    : rolling-dns-reboot.yml
+# Description : Orchestrates rolling host reboots across dual DNS nodes
+# Author      : SudoShea
+# Version     : 1.11.0
+# Licence     : MIT
+# ==============================================================================
+---
+- name: Zero-Downtime Rolling Host Reboot Orchestration
+  hosts: dns_servers
+  serial: 1
+  become: true
+  tasks:
+    - name: Execute system reboot maintenance tasks
+      ansible.builtin.include_role:
+        name: system_maintenance
+        tasks_from: reboot.yml

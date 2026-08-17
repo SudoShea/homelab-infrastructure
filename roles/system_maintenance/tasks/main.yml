@@ -3,7 +3,7 @@
 # File        : roles/system_maintenance/tasks/main.yml
 # Description : Automated host, container maintenance, and weekly timer setup
 # Author      : SudoShea
-# Version     : 1.10.0
+# Version     : 1.11.0
 # Licence     : MIT
 # ==============================================================================
 ---

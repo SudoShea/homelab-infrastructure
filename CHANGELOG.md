@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.0] - 2026-08-17
+
+### Added
+* **Zero-Downtime Rolling Reboot Orchestrator:** Added `rolling-dns-reboot.yml` root playbook to orchestrate sequential (`serial: 1`) host reboots across `dns_servers` (`pihole-primary` and `pihole-secondary`).
+* **System Maintenance Reboot Module:** Added `roles/system_maintenance/tasks/reboot.yml` incorporating OS reboot flag detection (`/var/run/reboot-required` & `needs-restarting -r`), pre-flight peer DNS resolution checks, and post-reboot Podman container / 127.0.0.1 DNS validation.
+
+### Changed
+* **Documentation & Quick Start:** Updated root `README.md` architecture overview, repository directory layout tree, and Quick Start instructions with rolling reboot execution steps.
+
+---
+
 ## [1.10.0] - 2026-08-03
 
 ### Added

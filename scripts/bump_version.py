@@ -3,7 +3,7 @@
 # File        : scripts/bump_version.py
 # Description : Automated semantic version bumper with recursive tree sync and smart git integration
 # Author      : SudoShea
-# Version     : 1.10.0
+# Version     : 1.11.0
 # License     : MIT
 # ==============================================================================
 

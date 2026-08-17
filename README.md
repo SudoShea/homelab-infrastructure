@@ -17,6 +17,7 @@ An enterprise-grade Infrastructure-as-Code (IaC) repository for provisioning a r
 * **Pi-hole v6 (DNS Filter & Native HTTPS):** Network-wide ad blocking, local DNS resolution, and embedded web server support with native TLS.
 * **Unbound (Recursive DNS):** Direct root-server DNS resolver with dynamic architecture detection (`aarch64` / `x86_64`) forwarding queries to root servers securely over port `5335`.
 * **Centralised Observability Stack:** Log aggregation via Vector (journald shipper), Loki (indexing engine), and Grafana (TLS-encrypted dashboards) running as native systemd Quadlets with SELinux container security overrides for journal access.
+* **Zero-Downtime Rolling Host Reboot Orchestrator:** Dedicated playbook (`rolling-dns-reboot.yml`) and task module (`roles/system_maintenance/tasks/reboot.yml`) executing `serial: 1` rolling host reboots across dual DNS nodes (`pihole-primary` & `pihole-secondary`) with pre-reboot partner node `dig` health checks, OS reboot flag detection (`/var/run/reboot-required` & `needs-restarting`), and post-reboot container/resolution validation.
 * **Automated System & Container Maintenance:** Standalone `system_maintenance` Ansible role deploying a native user-scoped systemd timer (`homelab-maintenance.timer`) executing weekly Sunday 04:00 AM routines (Podman dangling image pruning, journal log vacuuming, `apt`/`dnf` package cleanups, Pi-hole FTL SQLite vacuuming via `podman unshare`, and non-disruptive host reboot auditing).
 * **Multi-OS Host Support:** Automated security patching for both Debian/Ubuntu (`unattended-upgrades`) and RHEL/Fedora (`dnf-automatic`).
 * **3-2-1 Encrypted Backup Engine:** Automated, deduplicated, AES-256 encrypted snapshots using Restic, managed by native systemd daily timers, automated weekly sandbox restore verification (`test-restore.sh` & `restic-verify.timer`), and offsite multi-cloud replication via Rclone (`linux_backup_automation` Ansible role).
@@ -38,7 +39,7 @@ homelab-infrastructure/
 │   ├── all/
 │   │   ├── vault.yml                     # Encrypted production secrets (Restic, Rclone, Grafana)
 │   │   └── vault.yml.example             # Secrets reference template
-│   └── homelab/
+│   └── homelab_nodes/
 │       └── backup.yml                    # Multi-remote Restic & Rclone backup configuration
 ├── roles/
 │   ├── linux_backup_automation/          # 3-2-1 Restic & Rclone backup automation role
@@ -54,7 +55,10 @@ homelab-infrastructure/
 │   │   ├── handlers/main.yml             # Systemd daemon-reload handlers
 │   │   ├── tasks/main.yml                # Core DNS Quadlet deployment tasks
 │   │   └── templates/                    # pihole.container.j2, unbound.container.j2 & network definitions
-│   └── system_maintenance/               # Automated host/container maintenance & weekly timer setup
+│   └── system_maintenance/               # Automated host/container maintenance & zero-downtime reboot tasks
+│       └── tasks/
+│           ├── main.yml                  # Maintenance timer & housekeeping tasks
+│           └── reboot.yml                # Zero-downtime rolling reboot task module
 ├── scripts/
 │   ├── bump_version.py                   # Version bump & automated file header sync script
 │   ├── lint.sh                           # Local ansible-lint execution wrapper
@@ -66,6 +70,7 @@ homelab-infrastructure/
 ├── LICENSE                               # MIT Licence
 ├── README.md                             # Project documentation
 ├── requirements.yml                      # External Ansible Galaxy role dependencies
+├── rolling-dns-reboot.yml                # Standalone zero-downtime rolling reboot playbook
 ├── site.yml                              # Master playbook entrypoint
 └── VERSION                               # Current release version tag
 ```
@@ -123,6 +128,16 @@ Deploy to a specific host target or across the entire inventory:
 
 # Execute system maintenance tasks on demand
 ./scripts/run.sh maintenance
+```
+
+### 5. Execute Zero-Downtime Rolling Reboots
+Run the rolling reboot playbook following kernel or system package updates:
+```bash
+# Dry-run check for pending host reboots
+ansible-playbook -i inventory.local.ini rolling-dns-reboot.yml --check
+
+# Execute zero-downtime rolling reboots
+ansible-playbook -i inventory.local.ini rolling-dns-reboot.yml
 ```
 ---
 

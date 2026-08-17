@@ -1,0 +1,75 @@
+# ==============================================================================
+# Role        : system_maintenance
+# File        : roles/system_maintenance/tasks/reboot.yml
+# Description : Zero-downtime host reboot and post-reboot health checks
+# Author      : SudoShea
+# Version     : 1.11.0
+# Licence     : MIT
+# ==============================================================================
+---
+# Detect reboot flags
+- name: Check for Debian/Ubuntu reboot flag file
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: debian_reboot_flag
+
+- name: Check for RHEL/Fedora reboot flag via needs-restarting
+  ansible.builtin.command: needs-restarting -r
+  register: rhel_reboot_flag
+  failed_when: false
+  changed_when: false
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Set reboot requirement fact
+  ansible.builtin.set_fact:
+    host_reboot_required: >-
+      {{
+        debian_reboot_flag.stat.exists or
+        (rhel_reboot_flag.rc is defined and rhel_reboot_flag.rc == 1)
+      }}
+
+# Pre-Reboot Partner Health Check
+- name: Identify secondary/partner DNS node
+  ansible.builtin.set_fact:
+    partner_node: "{{ (groups['dns_servers'] | reject('eq', inventory_hostname) | list) | first }}"
+  when: host_reboot_required
+
+- name: Verify partner DNS node is operational before rebooting
+  ansible.builtin.command: >
+    dig +short +time=3 +tries=2
+    @{{ hostvars[partner_node]['ansible_host'] }} google.com
+  register: partner_dns_check
+  changed_when: false
+  failed_when: partner_dns_check.stdout == ""
+  when: host_reboot_required
+  retries: 3
+  delay: 5
+
+# Host Reboot
+- name: Reboot host if kernel update flag is present
+  ansible.builtin.reboot:
+    msg: "Rebooting host due to kernel updates (Ansible Rolling Reboot Orchestrator)"
+    connect_timeout: 10
+    reboot_timeout: 300
+    test_command: uptime
+  when: host_reboot_required
+
+# Post-Reboot Service & Container Validation
+- name: Wait for Podman containers to reach active state
+  ansible.builtin.command: podman ps --filter status=running --quiet
+  register: running_containers
+  changed_when: false
+  until: running_containers.stdout != ""
+  retries: 12
+  delay: 5
+  when: host_reboot_required
+
+- name: Verify local DNS resolution on rebooted node (127.0.0.1)
+  ansible.builtin.command: dig +short +time=3 +tries=2 @127.0.0.1 google.com
+  register: local_dns_check
+  changed_when: false
+  failed_when: local_dns_check.stdout == ""
+  until: local_dns_check.stdout != ""
+  retries: 10
+  delay: 5
+  when: host_reboot_required
